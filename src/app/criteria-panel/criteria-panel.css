@@ -39,6 +39,20 @@
   font-weight: 500;
 }
 
+.direction-btn {
+  border: none;
+  background: none;
+  color: #2f8f3f;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.3rem;
+  line-height: 1;
+}
+
+.direction-btn.negative {
+  color: #c0392b;
+}
+
 .remove-btn {
   border: none;
   background: none;

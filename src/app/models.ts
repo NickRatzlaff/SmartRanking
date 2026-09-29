@@ -2,6 +2,7 @@ export interface Criterion {
   id: string;
   name: string;
   weight: number; // 0-100, normalized against other criteria when scoring
+  higherIsBetter: boolean; // false for criteria like "difficulty" where lower values should score higher
 }
 
 export interface RankedObject {

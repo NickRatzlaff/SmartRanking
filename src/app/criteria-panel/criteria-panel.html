@@ -14,6 +14,19 @@
           <span class="criterion-name">{{ criterion.name }}</span>
           <button
             type="button"
+            class="direction-btn"
+            [class.negative]="!criterion.higherIsBetter"
+            [title]="
+              criterion.higherIsBetter
+                ? 'Higher is better — click to invert'
+                : 'Lower is better — click to invert'
+            "
+            (click)="ranking.toggleCriterionDirection(criterion.id)"
+          >
+            {{ criterion.higherIsBetter ? '▲' : '▼' }}
+          </button>
+          <button
+            type="button"
             class="remove-btn"
             title="Remove criterion"
             (click)="ranking.removeCriterion(criterion.id)"

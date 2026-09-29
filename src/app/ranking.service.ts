@@ -40,7 +40,8 @@ export class RankingService {
           ? 0
           : criteria.reduce((sum, c) => {
               const value = obj.values[c.id] ?? DEFAULT_VALUE;
-              return sum + (value * c.weight) / total;
+              const effective = c.higherIsBetter ? value : MIN_VALUE + MAX_VALUE - value;
+              return sum + (effective * c.weight) / total;
             }, 0);
       return { ...obj, score };
     });
@@ -85,7 +86,9 @@ export class RankingService {
     if (!raw) return;
     try {
       const parsed: PersistedState = JSON.parse(raw);
-      this.criteria.set(parsed.criteria ?? []);
+      this.criteria.set(
+        (parsed.criteria ?? []).map((c) => ({ ...c, higherIsBetter: c.higherIsBetter ?? true })),
+      );
       this.objects.set(parsed.objects ?? []);
     } catch {
       // ignore corrupt state
@@ -95,7 +98,16 @@ export class RankingService {
   addCriterion(name: string): void {
     const trimmed = name.trim();
     if (!trimmed) return;
-    this.criteria.update((list) => [...list, { id: createId(), name: trimmed, weight: 50 }]);
+    this.criteria.update((list) => [
+      ...list,
+      { id: createId(), name: trimmed, weight: 50, higherIsBetter: true },
+    ]);
+  }
+
+  toggleCriterionDirection(id: string): void {
+    this.criteria.update((list) =>
+      list.map((c) => (c.id === id ? { ...c, higherIsBetter: !c.higherIsBetter } : c)),
+    );
   }
 
   removeCriterion(id: string): void {
