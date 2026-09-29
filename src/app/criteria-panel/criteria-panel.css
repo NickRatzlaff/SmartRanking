@@ -1,0 +1,90 @@
+.criteria-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+  min-width: 220px;
+}
+
+.criteria-panel h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.criteria-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.criterion-row {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.criterion-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.criterion-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.remove-btn {
+  border: none;
+  background: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.remove-btn:hover {
+  color: #d33;
+}
+
+.criterion-slider {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.criterion-slider input[type='range'] {
+  flex: 1;
+}
+
+.weight-value {
+  min-width: 2ch;
+  text-align: right;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.empty-state {
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.add-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.add-form input {
+  flex: 1;
+  padding: 0.35rem 0.5rem;
+}
+
+.add-form button {
+  padding: 0.35rem 0.75rem;
+}

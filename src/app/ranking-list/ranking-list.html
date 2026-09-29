@@ -1,0 +1,54 @@
+<section class="ranking-list">
+  <h2>Ranking</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="rank-col">#</th>
+        <th class="name-col">Name</th>
+        @for (criterion of ranking.criteria(); track criterion.id) {
+          <th class="value-col">{{ criterion.name }}</th>
+        }
+        <th class="score-col">Score</th>
+        <th class="actions-col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (obj of ranking.scoredObjects(); track obj.id; let i = $index) {
+        <tr>
+          <td class="rank-col">{{ i + 1 }}</td>
+          <td class="name-col">{{ obj.name }}</td>
+          @for (criterion of ranking.criteria(); track criterion.id) {
+            <td class="value-col">
+              <input
+                type="range"
+                min="1"
+                max="10"
+                [value]="obj.values[criterion.id] ?? 5"
+                (input)="onValueChange(obj.id, criterion.id, $event)"
+              />
+              <span>{{ obj.values[criterion.id] ?? 5 }}</span>
+            </td>
+          }
+          <td class="score-col">{{ obj.score.toFixed(1) }}</td>
+          <td class="actions-col">
+            <button type="button" class="remove-btn" title="Remove object" (click)="ranking.removeObject(obj.id)">
+              ✕
+            </button>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td [attr.colspan]="ranking.criteria().length + 4" class="empty-state">
+            No objects yet — add one below.
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <form class="add-form" (submit)="$event.preventDefault(); addObject()">
+    <input type="text" placeholder="New object name" [(ngModel)]="newObjectName" name="newObjectName" />
+    <button type="submit">Add</button>
+  </form>
+</section>

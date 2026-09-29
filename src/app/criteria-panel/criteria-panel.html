@@ -1,0 +1,49 @@
+<section class="criteria-panel">
+  <h2>Criteria</h2>
+
+  <ul class="criteria-list">
+    @for (criterion of ranking.criteria(); track criterion.id) {
+      <li class="criterion-row">
+        <div class="criterion-header">
+          <input
+            type="checkbox"
+            [checked]="ranking.selectedCriteriaIds().includes(criterion.id)"
+            [disabled]="isMaxSelected(criterion.id)"
+            (change)="ranking.toggleCriterionSelected(criterion.id)"
+          />
+          <span class="criterion-name">{{ criterion.name }}</span>
+          <button
+            type="button"
+            class="remove-btn"
+            title="Remove criterion"
+            (click)="ranking.removeCriterion(criterion.id)"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="criterion-slider">
+          <input
+            type="range"
+            min="0"
+            max="100"
+            [value]="criterion.weight"
+            (input)="onWeightChange(criterion.id, $event)"
+          />
+          <span class="weight-value">{{ criterion.weight }}</span>
+        </div>
+      </li>
+    } @empty {
+      <li class="empty-state">No criteria yet — add one below.</li>
+    }
+  </ul>
+
+  <form class="add-form" (submit)="$event.preventDefault(); addCriterion()">
+    <input
+      type="text"
+      placeholder="New criterion name"
+      [(ngModel)]="newCriterionName"
+      name="newCriterionName"
+    />
+    <button type="submit">Add</button>
+  </form>
+</section>

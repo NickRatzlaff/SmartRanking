@@ -1,0 +1,88 @@
+.ranking-list {
+  flex: 1;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+}
+
+.ranking-list h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.5rem 0.4rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+.rank-col {
+  width: 2.5rem;
+  color: #999;
+}
+
+.score-col {
+  width: 4rem;
+  font-weight: 600;
+}
+
+.actions-col {
+  width: 2rem;
+}
+
+.value-col {
+  min-width: 8rem;
+}
+
+.value-col input[type='range'] {
+  vertical-align: middle;
+  width: 5.5rem;
+}
+
+.value-col span {
+  display: inline-block;
+  min-width: 1.5ch;
+  margin-left: 0.35rem;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.remove-btn {
+  border: none;
+  background: none;
+  color: #999;
+  cursor: pointer;
+}
+
+.remove-btn:hover {
+  color: #d33;
+}
+
+.empty-state {
+  text-align: center;
+  color: #999;
+  padding: 1.5rem;
+}
+
+.add-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.add-form input {
+  flex: 1;
+  padding: 0.35rem 0.5rem;
+}
+
+.add-form button {
+  padding: 0.35rem 0.75rem;
+}
