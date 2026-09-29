@@ -1,0 +1,101 @@
+<section class="xy-graph">
+  @if (axes(); as a) {
+    @let xc = a.xc;
+    @let yc = a.yc;
+    <h2>{{ xc.name }} vs {{ yc.name }}</h2>
+      <p class="hint">Drag the points to adjust each object's values for both criteria.</p>
+
+      <svg [attr.viewBox]="'0 0 ' + viewboxSize + ' ' + viewboxSize" class="graph-svg">
+        <!-- gridlines -->
+        @for (tick of ticks; track tick) {
+          <line
+            [attr.x1]="axisLeftX"
+            [attr.x2]="axisRightX"
+            [attr.y1]="axisBottomY - ((tick - 1) / 9) * (axisBottomY - axisTopY)"
+            [attr.y2]="axisBottomY - ((tick - 1) / 9) * (axisBottomY - axisTopY)"
+            class="gridline"
+          />
+          <line
+            [attr.y1]="axisTopY"
+            [attr.y2]="axisBottomY"
+            [attr.x1]="axisLeftX + ((tick - 1) / 9) * (axisRightX - axisLeftX)"
+            [attr.x2]="axisLeftX + ((tick - 1) / 9) * (axisRightX - axisLeftX)"
+            class="gridline"
+          />
+          <text
+            [attr.x]="axisLeftX - 10"
+            [attr.y]="axisBottomY - ((tick - 1) / 9) * (axisBottomY - axisTopY) + 4"
+            class="tick-label"
+            text-anchor="end"
+          >
+            {{ tick }}
+          </text>
+          <text
+            [attr.x]="axisLeftX + ((tick - 1) / 9) * (axisRightX - axisLeftX)"
+            [attr.y]="axisBottomY + 16"
+            class="tick-label"
+            text-anchor="middle"
+          >
+            {{ tick }}
+          </text>
+        }
+
+        <!-- axis lines -->
+        <line
+          [attr.x1]="axisLeftX"
+          [attr.x2]="axisLeftX"
+          [attr.y1]="axisTopY"
+          [attr.y2]="axisBottomY"
+          class="axis-line"
+        />
+        <line
+          [attr.x1]="axisLeftX"
+          [attr.x2]="axisRightX"
+          [attr.y1]="axisBottomY"
+          [attr.y2]="axisBottomY"
+          class="axis-line"
+        />
+
+        <!-- axis titles -->
+        <text
+          [attr.x]="(axisLeftX + axisRightX) / 2"
+          [attr.y]="viewboxSize - 12"
+          class="axis-title"
+          text-anchor="middle"
+        >
+          {{ xc.name }}
+        </text>
+        <text
+          [attr.x]="-((axisTopY + axisBottomY) / 2)"
+          y="18"
+          class="axis-title"
+          text-anchor="middle"
+          transform="rotate(-90)"
+        >
+          {{ yc.name }}
+        </text>
+
+        <!-- points -->
+        @for (point of points(); track point.id) {
+          <g
+            class="point-group"
+            [class.dragging]="draggingId() === point.id"
+            (pointerdown)="onPointerDown($event, point.id)"
+            (pointermove)="onPointerMove($event)"
+            (pointerup)="onPointerUp($event)"
+            (pointercancel)="onPointerUp($event)"
+          >
+            <text [attr.x]="point.x" [attr.y]="point.y - 14" class="point-label" text-anchor="middle">
+              {{ point.name }}
+            </text>
+            <circle [attr.cx]="point.x" [attr.cy]="point.y" r="9" class="point-circle" />
+            <text [attr.x]="point.x" [attr.y]="point.y + 24" class="point-value" text-anchor="middle">
+              ({{ point.xValue }}, {{ point.yValue }})
+            </text>
+          </g>
+        }
+      </svg>
+  } @else {
+    <p class="empty-state">Select two criteria to see the XY graph.</p>
+  }
+</section>

@@ -3,10 +3,11 @@ import { CriteriaPanel } from './criteria-panel/criteria-panel';
 import { CriterionGraph } from './criterion-graph/criterion-graph';
 import { RankingList } from './ranking-list/ranking-list';
 import { RankingService } from './ranking.service';
+import { XyGraph } from './xy-graph/xy-graph';
 
 @Component({
   selector: 'app-root',
-  imports: [RankingList, CriteriaPanel, CriterionGraph],
+  imports: [RankingList, CriteriaPanel, CriterionGraph, XyGraph],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

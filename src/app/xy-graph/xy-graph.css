@@ -1,0 +1,81 @@
+.xy-graph {
+  flex: 1;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+}
+
+.xy-graph h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.hint {
+  margin: 0 0 0.5rem;
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.graph-svg {
+  width: 100%;
+  height: 520px;
+  touch-action: none;
+}
+
+.gridline {
+  stroke: #eee;
+  stroke-width: 1;
+}
+
+.tick-label {
+  font-size: 11px;
+  fill: #999;
+}
+
+.axis-line {
+  stroke: #ccc;
+  stroke-width: 2;
+}
+
+.axis-title {
+  font-size: 13px;
+  font-weight: 600;
+  fill: #555;
+}
+
+.point-group {
+  cursor: grab;
+}
+
+.point-group.dragging {
+  cursor: grabbing;
+}
+
+.point-circle {
+  fill: #3b82f6;
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.point-group.dragging .point-circle {
+  fill: #1d4ed8;
+  r: 11;
+}
+
+.point-label {
+  font-size: 12px;
+  font-weight: 500;
+  fill: #333;
+  user-select: none;
+}
+
+.point-value {
+  font-size: 11px;
+  fill: #666;
+  user-select: none;
+}
+
+.empty-state {
+  color: #999;
+}
