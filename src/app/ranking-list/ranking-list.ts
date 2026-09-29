@@ -19,7 +19,12 @@ export class RankingList {
   }
 
   protected onValueChange(objectId: string, criterionId: string, event: Event): void {
+    this.ranking.beginAdjust();
     const input = event.target as HTMLInputElement;
     this.ranking.setValue(objectId, criterionId, Number(input.value));
+  }
+
+  protected onValueCommitted(): void {
+    this.ranking.endAdjust();
   }
 }

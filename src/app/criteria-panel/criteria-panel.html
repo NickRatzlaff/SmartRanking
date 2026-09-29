@@ -28,6 +28,7 @@
             max="100"
             [value]="criterion.weight"
             (input)="onWeightChange(criterion.id, $event)"
+            (change)="onWeightCommitted()"
           />
           <span class="weight-value">{{ criterion.weight }}</span>
         </div>

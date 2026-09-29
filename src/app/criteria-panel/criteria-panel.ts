@@ -19,8 +19,13 @@ export class CriteriaPanel {
   }
 
   protected onWeightChange(id: string, event: Event): void {
+    this.ranking.beginAdjust();
     const input = event.target as HTMLInputElement;
     this.ranking.setWeight(id, Number(input.value));
+  }
+
+  protected onWeightCommitted(): void {
+    this.ranking.endAdjust();
   }
 
   protected isMaxSelected(id: string): boolean {

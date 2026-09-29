@@ -26,6 +26,7 @@
                 max="10"
                 [value]="obj.values[criterion.id] ?? 5"
                 (input)="onValueChange(obj.id, criterion.id, $event)"
+                (change)="onValueCommitted()"
               />
               <span>{{ obj.values[criterion.id] ?? 5 }}</span>
             </td>
