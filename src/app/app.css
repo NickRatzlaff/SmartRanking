@@ -14,3 +14,13 @@
   gap: 1rem;
   padding: 1.5rem;
 }
+
+.placeholder {
+  flex: 1;
+  padding: 2rem;
+  background: #fff;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+  color: #999;
+  text-align: center;
+}

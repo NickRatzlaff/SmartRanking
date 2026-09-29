@@ -1,0 +1,52 @@
+<section class="criterion-graph">
+  @if (criterion(); as c) {
+    <h2>{{ c.name }}</h2>
+    <p class="hint">Drag the points up or down to adjust each object's value.</p>
+
+    <svg [attr.viewBox]="'0 0 ' + viewboxWidth + ' ' + viewboxHeight" class="graph-svg">
+      <!-- gridlines + tick labels -->
+      @for (tick of ticks; track tick) {
+        <line
+          [attr.x1]="axisX"
+          [attr.x2]="viewboxWidth - 10"
+          [attr.y1]="axisBottomY - ((tick - 1) / 9) * (axisBottomY - axisTopY)"
+          [attr.y2]="axisBottomY - ((tick - 1) / 9) * (axisBottomY - axisTopY)"
+          class="gridline"
+        />
+        <text
+          [attr.x]="axisX - 10"
+          [attr.y]="axisBottomY - ((tick - 1) / 9) * (axisBottomY - axisTopY) + 4"
+          class="tick-label"
+          text-anchor="end"
+        >
+          {{ tick }}
+        </text>
+      }
+
+      <!-- axis line -->
+      <line [attr.x1]="axisX" [attr.x2]="axisX" [attr.y1]="axisTopY" [attr.y2]="axisBottomY" class="axis-line" />
+
+      <!-- points -->
+      @for (point of points(); track point.id) {
+        <g
+          class="point-group"
+          [class.dragging]="draggingId() === point.id"
+          (pointerdown)="onPointerDown($event, point.id)"
+          (pointermove)="onPointerMove($event)"
+          (pointerup)="onPointerUp($event)"
+          (pointercancel)="onPointerUp($event)"
+        >
+          <text [attr.x]="point.x" [attr.y]="point.y - 14" class="point-label" text-anchor="middle">
+            {{ point.name }}
+          </text>
+          <circle [attr.cx]="point.x" [attr.cy]="point.y" r="9" class="point-circle" />
+          <text [attr.x]="point.x" [attr.y]="point.y + 24" class="point-value" text-anchor="middle">
+            {{ point.value }}
+          </text>
+        </g>
+      }
+    </svg>
+  } @else {
+    <p class="empty-state">Select a criterion to see its graph.</p>
+  }
+</section>
