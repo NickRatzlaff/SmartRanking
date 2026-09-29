@@ -1,52 +1,57 @@
 <section class="ranking-list">
   <h2>Ranking</h2>
 
-  <table>
-    <thead>
-      <tr>
-        <th class="rank-col">#</th>
-        <th class="name-col">Name</th>
-        @for (criterion of ranking.criteria(); track criterion.id) {
-          <th class="value-col">{{ criterion.name }}</th>
+  <ul class="object-list">
+    @for (obj of ranking.scoredObjects(); track obj.id; let i = $index) {
+      <li class="object-card">
+        <div class="object-row">
+          <button
+            type="button"
+            class="object-summary"
+            [attr.aria-expanded]="isExpanded(obj.id)"
+            (click)="toggleExpanded(obj.id)"
+          >
+            <span class="chevron">{{ isExpanded(obj.id) ? '▾' : '▸' }}</span>
+            <span class="rank">{{ i + 1 }}</span>
+            <span class="name">{{ obj.name }}</span>
+            <span class="score">{{ obj.score.toFixed(1) }}</span>
+          </button>
+          <button
+            type="button"
+            class="remove-btn"
+            title="Remove object"
+            (click)="ranking.removeObject(obj.id)"
+          >
+            ✕
+          </button>
+        </div>
+
+        @if (isExpanded(obj.id)) {
+          <div class="object-details">
+            @for (criterion of ranking.criteria(); track criterion.id) {
+              <div class="detail-row">
+                <label [attr.for]="obj.id + '-' + criterion.id">{{ criterion.name }}</label>
+                <input
+                  [id]="obj.id + '-' + criterion.id"
+                  type="range"
+                  min="1"
+                  max="10"
+                  [value]="obj.values[criterion.id] ?? 5"
+                  (input)="onValueChange(obj.id, criterion.id, $event)"
+                  (change)="onValueCommitted()"
+                />
+                <span class="detail-value">{{ obj.values[criterion.id] ?? 5 }}</span>
+              </div>
+            } @empty {
+              <p class="empty-state">Add a criterion to set values.</p>
+            }
+          </div>
         }
-        <th class="score-col">Score</th>
-        <th class="actions-col"></th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (obj of ranking.scoredObjects(); track obj.id; let i = $index) {
-        <tr>
-          <td class="rank-col">{{ i + 1 }}</td>
-          <td class="name-col">{{ obj.name }}</td>
-          @for (criterion of ranking.criteria(); track criterion.id) {
-            <td class="value-col">
-              <input
-                type="range"
-                min="1"
-                max="10"
-                [value]="obj.values[criterion.id] ?? 5"
-                (input)="onValueChange(obj.id, criterion.id, $event)"
-                (change)="onValueCommitted()"
-              />
-              <span>{{ obj.values[criterion.id] ?? 5 }}</span>
-            </td>
-          }
-          <td class="score-col">{{ obj.score.toFixed(1) }}</td>
-          <td class="actions-col">
-            <button type="button" class="remove-btn" title="Remove object" (click)="ranking.removeObject(obj.id)">
-              ✕
-            </button>
-          </td>
-        </tr>
-      } @empty {
-        <tr>
-          <td [attr.colspan]="ranking.criteria().length + 4" class="empty-state">
-            No objects yet — add one below.
-          </td>
-        </tr>
-      }
-    </tbody>
-  </table>
+      </li>
+    } @empty {
+      <li class="empty-state">No objects yet — add one below.</li>
+    }
+  </ul>
 
   <form class="add-form" (submit)="$event.preventDefault(); addObject()">
     <input type="text" placeholder="New object name" [(ngModel)]="newObjectName" name="newObjectName" />

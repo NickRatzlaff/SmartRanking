@@ -11,48 +11,61 @@
   font-size: 1.05rem;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
+.object-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-th,
-td {
-  padding: 0.5rem 0.4rem;
-  text-align: left;
+.object-card {
   border-bottom: 1px solid #eee;
+}
+
+.object-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.object-summary {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.4rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
+.object-summary:hover {
+  background: #f7f8fa;
+}
+
+.chevron {
+  width: 1rem;
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.rank {
+  width: 1.5rem;
+  color: #999;
   font-size: 0.9rem;
 }
 
-.rank-col {
-  width: 2.5rem;
-  color: #999;
+.name {
+  flex: 1;
+  font-weight: 500;
 }
 
-.score-col {
-  width: 4rem;
+.score {
   font-weight: 600;
-}
-
-.actions-col {
-  width: 2rem;
-}
-
-.value-col {
-  min-width: 8rem;
-}
-
-.value-col input[type='range'] {
-  vertical-align: middle;
-  width: 5.5rem;
-}
-
-.value-col span {
-  display: inline-block;
-  min-width: 1.5ch;
-  margin-left: 0.35rem;
-  color: #666;
-  font-size: 0.85rem;
+  min-width: 3rem;
+  text-align: right;
 }
 
 .remove-btn {
@@ -60,10 +73,42 @@ td {
   background: none;
   color: #999;
   cursor: pointer;
+  padding: 0 0.75rem;
 }
 
 .remove-btn:hover {
   color: #d33;
+}
+
+.object-details {
+  padding: 0.25rem 0.75rem 0.9rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.detail-row label {
+  width: 6rem;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.detail-row input[type='range'] {
+  flex: 1;
+}
+
+.detail-value {
+  min-width: 1.5ch;
+  text-align: right;
+  font-size: 0.85rem;
+  color: #666;
 }
 
 .empty-state {
