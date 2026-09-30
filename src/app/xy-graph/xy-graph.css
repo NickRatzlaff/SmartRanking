@@ -44,6 +44,13 @@
   fill: #555;
 }
 
+.leader-line {
+  stroke: rgba(0, 0, 0, 0.35);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+  pointer-events: none;
+}
+
 .point-group {
   cursor: grab;
 }

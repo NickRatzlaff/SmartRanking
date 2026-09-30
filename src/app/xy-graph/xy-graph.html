@@ -108,6 +108,15 @@
             (pointerup)="onPointerUp($event)"
             (pointercancel)="onPointerUp($event)"
           >
+            @if (point.x !== point.rawX || point.y !== point.rawY) {
+              <line
+                [attr.x1]="point.rawX"
+                [attr.y1]="point.rawY"
+                [attr.x2]="point.x"
+                [attr.y2]="point.y"
+                class="leader-line"
+              />
+            }
             <text [attr.x]="point.x" [attr.y]="point.y - 14" class="point-label" text-anchor="middle">
               {{ point.name }}
             </text>
