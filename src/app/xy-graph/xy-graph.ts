@@ -43,6 +43,19 @@ export class XyGraph {
     return xc && yc ? { xc, yc } : null;
   });
 
+  /** Diagonal gradient from the "worst" corner (both criteria at their worst) to the "best" corner. */
+  protected readonly gradientCorners = computed(() => {
+    const xc = this.xCriterion();
+    const yc = this.yCriterion();
+    const xHigherIsBetter = xc?.higherIsBetter ?? true;
+    const yHigherIsBetter = yc?.higherIsBetter ?? true;
+    const worstX = xHigherIsBetter ? this.axisLeftX : this.axisRightX;
+    const bestX = xHigherIsBetter ? this.axisRightX : this.axisLeftX;
+    const worstY = yHigherIsBetter ? this.axisBottomY : this.axisTopY;
+    const bestY = yHigherIsBetter ? this.axisTopY : this.axisBottomY;
+    return { x1: worstX, y1: worstY, x2: bestX, y2: bestY };
+  });
+
   protected readonly points = computed(() => {
     const xc = this.xCriterion();
     const yc = this.yCriterion();

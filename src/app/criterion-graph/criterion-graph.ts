@@ -28,9 +28,20 @@ export class CriterionGraph {
     (_, i) => MIN_VALUE + i,
   );
 
+  protected readonly plotRight = VIEWBOX_WIDTH - 10;
+
   protected readonly criterion = computed(() => {
     const id = this.ranking.selectedCriteriaIds()[0];
     return this.ranking.criteria().find((c) => c.id === id) ?? null;
+  });
+
+  /** Gradient runs from the "worst" end of the axis to the "best" end. */
+  protected readonly gradientY = computed(() => {
+    const c = this.criterion();
+    const worstIsBottom = c?.higherIsBetter ?? true;
+    return worstIsBottom
+      ? { y1: this.axisBottomY, y2: this.axisTopY }
+      : { y1: this.axisTopY, y2: this.axisBottomY };
   });
 
   protected readonly points = computed(() => {

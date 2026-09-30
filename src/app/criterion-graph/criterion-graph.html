@@ -4,11 +4,34 @@
     <p class="hint">Drag the points up or down to adjust each object's value.</p>
 
     <svg [attr.viewBox]="'0 0 ' + viewboxWidth + ' ' + viewboxHeight" class="graph-svg">
+      <defs>
+        <linearGradient
+          id="criterionGradient"
+          gradientUnits="userSpaceOnUse"
+          x1="0"
+          [attr.y1]="gradientY().y1"
+          x2="0"
+          [attr.y2]="gradientY().y2"
+        >
+          <stop offset="0%" stop-color="hsl(0, 55%, 85%)" />
+          <stop offset="50%" stop-color="hsl(55, 55%, 85%)" />
+          <stop offset="100%" stop-color="hsl(120, 45%, 82%)" />
+        </linearGradient>
+      </defs>
+
+      <rect
+        [attr.x]="axisX"
+        [attr.y]="axisTopY"
+        [attr.width]="plotRight - axisX"
+        [attr.height]="axisBottomY - axisTopY"
+        fill="url(#criterionGradient)"
+      />
+
       <!-- gridlines + tick labels -->
       @for (tick of ticks; track tick) {
         <line
           [attr.x1]="axisX"
-          [attr.x2]="viewboxWidth - 10"
+          [attr.x2]="plotRight"
           [attr.y1]="axisBottomY - ((tick - 1) / 9) * (axisBottomY - axisTopY)"
           [attr.y2]="axisBottomY - ((tick - 1) / 9) * (axisBottomY - axisTopY)"
           class="gridline"
