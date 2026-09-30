@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MAX_VALUE, MIN_VALUE } from '../models';
 import { RankingService } from '../ranking.service';
 
 @Component({
@@ -40,5 +41,22 @@ export class RankingList {
 
   protected onValueCommitted(): void {
     this.ranking.endAdjust();
+  }
+
+  /** 0-100 fill percentage for the score bar; score is always within [MIN_VALUE, MAX_VALUE]. */
+  private scorePercent(score: number): number {
+    const pct = ((score - MIN_VALUE) / (MAX_VALUE - MIN_VALUE)) * 100;
+    return Math.min(100, Math.max(0, pct));
+  }
+
+  /** Bar fill width — floored so the lowest score still shows a sliver of red. */
+  protected scoreBarWidth(score: number): number {
+    return Math.max(this.scorePercent(score), 4);
+  }
+
+  /** Red -> yellow -> green as the score climbs from MIN_VALUE to MAX_VALUE. */
+  protected scoreColor(score: number): string {
+    const hue = (this.scorePercent(score) / 100) * 120;
+    return `hsl(${hue}, 70%, 45%)`;
   }
 }
