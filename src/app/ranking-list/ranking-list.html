@@ -14,15 +14,12 @@
             <span class="chevron">{{ isExpanded(obj.id) ? '▾' : '▸' }}</span>
             <span class="rank">{{ i + 1 }}</span>
             <span class="name">{{ obj.name }}</span>
-            <span class="score-bar-wrap">
-              <span class="score-bar-track">
-                <span
-                  class="score-bar-fill"
-                  [style.width.%]="scoreBarWidth(obj.score)"
-                  [style.background]="scoreColor(obj.score)"
-                ></span>
-              </span>
-              <span class="score-value">{{ obj.score.toFixed(1) }}</span>
+            <span class="score-bar-track" [title]="'Score: ' + obj.score.toFixed(1)">
+              <span
+                class="score-bar-fill"
+                [style.width.%]="scoreBarWidth(obj.score)"
+                [style.background]="scoreColor(obj.score)"
+              ></span>
             </span>
           </button>
           <button
