@@ -1,0 +1,10 @@
+@if (errorMessage(); as message) {
+  <div class="status error">
+    <p>Couldn't create a new board.</p>
+    <p class="detail">{{ message }}</p>
+  </div>
+} @else {
+  <div class="status">
+    <p>Creating your ranking board…</p>
+  </div>
+}

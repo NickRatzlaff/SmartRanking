@@ -2,17 +2,4 @@
   <h1>Smart Ranking</h1>
 </header>
 
-<main class="app-layout">
-  @switch (ranking.selectedCriteriaIds().length) {
-    @case (1) {
-      <app-criterion-graph />
-    }
-    @case (2) {
-      <app-xy-graph />
-    }
-    @default {
-      <app-ranking-list />
-    }
-  }
-  <app-criteria-panel />
-</main>
+<router-outlet />

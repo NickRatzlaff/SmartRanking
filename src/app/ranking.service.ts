@@ -1,19 +1,23 @@
-import { Injectable, computed, effect, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { Criterion, DEFAULT_VALUE, MAX_VALUE, MIN_VALUE, RankedObject } from './models';
-
-const STORAGE_KEY = 'smart-ranking-state';
+import { supabase } from './supabase.client';
 
 export interface ScoredObject extends RankedObject {
   score: number;
 }
 
-interface PersistedState {
-  criteria: Criterion[];
-  objects: RankedObject[];
-}
+/** How long to wait after the last rapid-fire change (slider drag) before writing it. */
+const WRITE_DEBOUNCE_MS = 400;
+/** How long to coalesce incoming realtime events before refetching the board. */
+const REFETCH_DEBOUNCE_MS = 200;
 
 function createId(): string {
   return crypto.randomUUID();
+}
+
+function logIfError(error: { message: string } | null): void {
+  if (error) console.error('Supabase write failed:', error.message);
 }
 
 @Injectable({ providedIn: 'root' })
@@ -21,8 +25,11 @@ export class RankingService {
   readonly criteria = signal<Criterion[]>([]);
   readonly objects = signal<RankedObject[]>([]);
 
-  /** Criteria currently checked for graph view (0, 1, or 2). */
+  /** Criteria currently checked for graph view (0, 1, or 2) — local to this viewer, not synced. */
   readonly selectedCriteriaIds = signal<string[]>([]);
+
+  /** True while the initial fetch for the current board is in flight. */
+  readonly loading = signal(true);
 
   readonly totalWeight = computed(() => this.criteria().reduce((sum, c) => sum + c.weight, 0));
 
@@ -62,6 +69,12 @@ export class RankingService {
     return [...known, ...missing].map((id) => byId.get(id)!);
   });
 
+  private boardId: string | null = null;
+  private channel: RealtimeChannel | null = null;
+  private readonly pendingWrites = new Map<string, ReturnType<typeof setTimeout>>();
+  private refetchTimer: ReturnType<typeof setTimeout> | null = null;
+  private refetchDeferred = false;
+
   /** Call when a slider drag starts, to freeze row order until endAdjust(). */
   beginAdjust(): void {
     if (this.isAdjusting()) return;
@@ -71,43 +84,157 @@ export class RankingService {
 
   endAdjust(): void {
     this.isAdjusting.set(false);
-  }
-
-  constructor() {
-    this.load();
-    effect(() => {
-      const state: PersistedState = { criteria: this.criteria(), objects: this.objects() };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    });
-  }
-
-  private load(): void {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    try {
-      const parsed: PersistedState = JSON.parse(raw);
-      this.criteria.set(
-        (parsed.criteria ?? []).map((c) => ({ ...c, higherIsBetter: c.higherIsBetter ?? true })),
-      );
-      this.objects.set(parsed.objects ?? []);
-    } catch {
-      // ignore corrupt state
+    if (this.refetchDeferred) {
+      this.refetchDeferred = false;
+      this.scheduleRefetch();
     }
+  }
+
+  /** Loads a board and subscribes to live changes from other collaborators. */
+  async connect(boardId: string): Promise<void> {
+    this.disconnect();
+    this.boardId = boardId;
+    this.loading.set(true);
+    this.criteria.set([]);
+    this.objects.set([]);
+
+    await this.refetchAll();
+    this.loading.set(false);
+
+    this.channel = supabase
+      .channel(`board-${boardId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'criteria', filter: `board_id=eq.${boardId}` },
+        () => this.scheduleRefetch(),
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ranked_objects',
+          filter: `board_id=eq.${boardId}`,
+        },
+        () => this.scheduleRefetch(),
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'object_values',
+          filter: `board_id=eq.${boardId}`,
+        },
+        () => this.scheduleRefetch(),
+      )
+      .subscribe();
+  }
+
+  /** Unsubscribes from the current board and cancels any pending debounced writes. */
+  disconnect(): void {
+    if (this.channel) {
+      supabase.removeChannel(this.channel);
+      this.channel = null;
+    }
+    for (const timer of this.pendingWrites.values()) clearTimeout(timer);
+    this.pendingWrites.clear();
+    if (this.refetchTimer) {
+      clearTimeout(this.refetchTimer);
+      this.refetchTimer = null;
+    }
+    this.boardId = null;
+  }
+
+  private scheduleRefetch(): void {
+    // Don't yank the board out from under an in-progress local drag; catch up once it ends.
+    if (this.isAdjusting()) {
+      this.refetchDeferred = true;
+      return;
+    }
+    if (this.refetchTimer) clearTimeout(this.refetchTimer);
+    this.refetchTimer = setTimeout(() => {
+      this.refetchTimer = null;
+      this.refetchAll();
+    }, REFETCH_DEBOUNCE_MS);
+  }
+
+  private async refetchAll(): Promise<void> {
+    const boardId = this.boardId;
+    if (!boardId) return;
+    const [{ data: criteriaRows }, { data: objectRows }, { data: valueRows }] = await Promise.all([
+      supabase.from('criteria').select('*').eq('board_id', boardId).order('created_at'),
+      supabase.from('ranked_objects').select('*').eq('board_id', boardId).order('created_at'),
+      supabase.from('object_values').select('*').eq('board_id', boardId),
+    ]);
+    if (this.boardId !== boardId) return; // a newer connect() superseded this fetch
+
+    this.criteria.set(
+      (criteriaRows ?? []).map((r) => ({
+        id: r['id'],
+        name: r['name'],
+        weight: r['weight'],
+        higherIsBetter: r['higher_is_better'],
+      })),
+    );
+
+    const valuesByObject = new Map<string, Record<string, number>>();
+    for (const v of valueRows ?? []) {
+      const values = valuesByObject.get(v['object_id']) ?? {};
+      values[v['criterion_id']] = Number(v['value']);
+      valuesByObject.set(v['object_id'], values);
+    }
+    this.objects.set(
+      (objectRows ?? []).map((r) => ({
+        id: r['id'],
+        name: r['name'],
+        values: valuesByObject.get(r['id']) ?? {},
+      })),
+    );
+  }
+
+  private debounceWrite(key: string, fn: () => void): void {
+    const existing = this.pendingWrites.get(key);
+    if (existing) clearTimeout(existing);
+    this.pendingWrites.set(
+      key,
+      setTimeout(() => {
+        this.pendingWrites.delete(key);
+        fn();
+      }, WRITE_DEBOUNCE_MS),
+    );
   }
 
   addCriterion(name: string): void {
     const trimmed = name.trim();
-    if (!trimmed) return;
+    if (!trimmed || !this.boardId) return;
+    const id = createId();
+    const boardId = this.boardId;
     this.criteria.update((list) => [
       ...list,
-      { id: createId(), name: trimmed, weight: 50, higherIsBetter: true },
+      { id, name: trimmed, weight: 50, higherIsBetter: true },
     ]);
+    supabase
+      .from('criteria')
+      .insert({ id, board_id: boardId, name: trimmed, weight: 50, higher_is_better: true })
+      .then(({ error }) => logIfError(error));
   }
 
   toggleCriterionDirection(id: string): void {
+    let nextValue = true;
     this.criteria.update((list) =>
-      list.map((c) => (c.id === id ? { ...c, higherIsBetter: !c.higherIsBetter } : c)),
+      list.map((c) => {
+        if (c.id !== id) return c;
+        nextValue = !c.higherIsBetter;
+        return { ...c, higherIsBetter: nextValue };
+      }),
     );
+    if (!this.boardId) return;
+    supabase
+      .from('criteria')
+      .update({ higher_is_better: nextValue })
+      .eq('id', id)
+      .then(({ error }) => logIfError(error));
   }
 
   removeCriterion(id: string): void {
@@ -119,16 +246,36 @@ export class RankingService {
         return { ...obj, values: rest };
       }),
     );
+    if (!this.boardId) return;
+    supabase
+      .from('criteria')
+      .delete()
+      .eq('id', id)
+      .then(({ error }) => logIfError(error));
   }
 
   renameCriterion(id: string, name: string): void {
     const trimmed = name.trim();
     if (!trimmed) return;
     this.criteria.update((list) => list.map((c) => (c.id === id ? { ...c, name: trimmed } : c)));
+    if (!this.boardId) return;
+    supabase
+      .from('criteria')
+      .update({ name: trimmed })
+      .eq('id', id)
+      .then(({ error }) => logIfError(error));
   }
 
   setWeight(id: string, weight: number): void {
     this.criteria.update((list) => list.map((c) => (c.id === id ? { ...c, weight } : c)));
+    if (!this.boardId) return;
+    this.debounceWrite(`weight:${id}`, () => {
+      supabase
+        .from('criteria')
+        .update({ weight })
+        .eq('id', id)
+        .then(({ error }) => logIfError(error));
+    });
   }
 
   toggleCriterionSelected(id: string): void {
@@ -145,22 +292,54 @@ export class RankingService {
 
   addObject(name: string): void {
     const trimmed = name.trim();
-    if (!trimmed) return;
+    if (!trimmed || !this.boardId) return;
+    const id = createId();
+    const boardId = this.boardId;
     const values: Record<string, number> = {};
     for (const c of this.criteria()) {
       values[c.id] = DEFAULT_VALUE;
     }
-    this.objects.update((list) => [...list, { id: createId(), name: trimmed, values }]);
+    this.objects.update((list) => [...list, { id, name: trimmed, values }]);
+
+    supabase
+      .from('ranked_objects')
+      .insert({ id, board_id: boardId, name: trimmed })
+      .then(({ error }) => logIfError(error));
+
+    const valueRows = Object.entries(values).map(([criterionId, value]) => ({
+      object_id: id,
+      criterion_id: criterionId,
+      board_id: boardId,
+      value,
+    }));
+    if (valueRows.length > 0) {
+      supabase
+        .from('object_values')
+        .insert(valueRows)
+        .then(({ error }) => logIfError(error));
+    }
   }
 
   removeObject(id: string): void {
     this.objects.update((list) => list.filter((o) => o.id !== id));
+    if (!this.boardId) return;
+    supabase
+      .from('ranked_objects')
+      .delete()
+      .eq('id', id)
+      .then(({ error }) => logIfError(error));
   }
 
   renameObject(id: string, name: string): void {
     const trimmed = name.trim();
     if (!trimmed) return;
     this.objects.update((list) => list.map((o) => (o.id === id ? { ...o, name: trimmed } : o)));
+    if (!this.boardId) return;
+    supabase
+      .from('ranked_objects')
+      .update({ name: trimmed })
+      .eq('id', id)
+      .then(({ error }) => logIfError(error));
   }
 
   setValue(objectId: string, criterionId: string, value: number): void {
@@ -170,5 +349,16 @@ export class RankingService {
         o.id === objectId ? { ...o, values: { ...o.values, [criterionId]: clamped } } : o,
       ),
     );
+    if (!this.boardId) return;
+    const boardId = this.boardId;
+    this.debounceWrite(`value:${objectId}:${criterionId}`, () => {
+      supabase
+        .from('object_values')
+        .upsert(
+          { object_id: objectId, criterion_id: criterionId, board_id: boardId, value: clamped },
+          { onConflict: 'object_id,criterion_id' },
+        )
+        .then(({ error }) => logIfError(error));
+    });
   }
 }

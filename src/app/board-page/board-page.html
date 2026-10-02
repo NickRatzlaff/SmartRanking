@@ -1,0 +1,24 @@
+<div class="toolbar">
+  <button type="button" class="share-btn" (click)="copyShareLink()">
+    {{ linkCopied() ? 'Link copied!' : 'Copy share link' }}
+  </button>
+</div>
+
+@if (ranking.loading()) {
+  <p class="loading">Loading board…</p>
+} @else {
+  <main class="app-layout">
+    @switch (ranking.selectedCriteriaIds().length) {
+      @case (1) {
+        <app-criterion-graph />
+      }
+      @case (2) {
+        <app-xy-graph />
+      }
+      @default {
+        <app-ranking-list />
+      }
+    }
+    <app-criteria-panel />
+  </main>
+}

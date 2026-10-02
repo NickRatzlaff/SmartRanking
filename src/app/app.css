@@ -7,10 +7,3 @@
   margin: 0;
   font-size: 1.3rem;
 }
-
-.app-layout {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1.5rem;
-}

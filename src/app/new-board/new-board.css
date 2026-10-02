@@ -1,0 +1,15 @@
+.status {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #888;
+}
+
+.status.error {
+  color: #c0392b;
+}
+
+.detail {
+  font-size: 0.85rem;
+  color: #999;
+  margin-top: 0.5rem;
+}
