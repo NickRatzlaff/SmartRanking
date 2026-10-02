@@ -5,7 +5,13 @@
     <h2>{{ xc.name }} vs {{ yc.name }}</h2>
       <p class="hint">Drag the points to adjust each object's values for both criteria.</p>
 
-      <svg [attr.viewBox]="'0 0 ' + viewboxSize + ' ' + viewboxSize" class="graph-svg">
+      <svg
+        [attr.viewBox]="'0 0 ' + viewboxSize + ' ' + viewboxSize"
+        class="graph-svg"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp($event)"
+        (pointercancel)="onPointerUp($event)"
+      >
         <defs>
           <linearGradient
             id="xyGradient"
@@ -108,9 +114,6 @@
               (pointerenter)="hoveredSingleId.set(group.members[0].id)"
               (pointerleave)="hoveredSingleId.set(null)"
               (pointerdown)="onPointerDown($event, group.members[0].id)"
-              (pointermove)="onPointerMove($event)"
-              (pointerup)="onPointerUp($event)"
-              (pointercancel)="onPointerUp($event)"
             >
               @if (hoveredSingleId() === group.members[0].id || draggingId() === group.members[0].id) {
                 <text [attr.x]="group.x" [attr.y]="group.y - 14" class="point-label" text-anchor="middle">
@@ -133,9 +136,6 @@
                   class="point-group"
                   [class.dragging]="draggingId() === point.id"
                   (pointerdown)="onPointerDown($event, point.id)"
-                  (pointermove)="onPointerMove($event)"
-                  (pointerup)="onPointerUp($event)"
-                  (pointercancel)="onPointerUp($event)"
                 >
                   <line
                     [attr.x1]="group.x"

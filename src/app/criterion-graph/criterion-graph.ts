@@ -86,10 +86,11 @@ export class CriterionGraph {
     return Math.min(MAX_VALUE, Math.max(MIN_VALUE, Math.round(raw)));
   }
 
+  /** Capture is taken on the <svg> root — see the equivalent note in XyGraph for why. */
   protected onPointerDown(event: PointerEvent, objectId: string): void {
-    const target = event.currentTarget as SVGElement;
+    const svg = (event.currentTarget as SVGElement).ownerSVGElement;
     try {
-      target.setPointerCapture(event.pointerId);
+      svg?.setPointerCapture(event.pointerId);
     } catch {
       // Pointer already released (e.g. a stray/synthetic event) — safe to ignore.
     }
@@ -104,9 +105,9 @@ export class CriterionGraph {
   }
 
   protected onPointerUp(event: PointerEvent): void {
-    const target = event.currentTarget as SVGElement;
-    if (target.hasPointerCapture(event.pointerId)) {
-      target.releasePointerCapture(event.pointerId);
+    const svg = event.currentTarget as SVGElement;
+    if (svg.hasPointerCapture(event.pointerId)) {
+      svg.releasePointerCapture(event.pointerId);
     }
     this.draggingId.set(null);
   }
@@ -125,7 +126,8 @@ export class CriterionGraph {
     const criterion = this.criterion();
     const objectId = this.draggingId();
     if (!criterion || !objectId) return;
-    const svg = (event.currentTarget as SVGElement).ownerSVGElement;
+    const target = event.currentTarget as SVGElement;
+    const svg = target instanceof SVGSVGElement ? target : target.ownerSVGElement;
     if (!svg) return;
     const point = svg.createSVGPoint();
     point.x = event.clientX;

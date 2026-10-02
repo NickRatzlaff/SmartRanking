@@ -8,6 +8,9 @@
         [attr.viewBox]="'0 0 ' + viewboxWidth() + ' ' + viewboxHeight"
         [style.width.px]="viewboxWidth()"
         class="graph-svg"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp($event)"
+        (pointercancel)="onPointerUp($event)"
       >
         <defs>
           <linearGradient
@@ -60,9 +63,6 @@
             class="point-group"
             [class.dragging]="draggingId() === point.id"
             (pointerdown)="onPointerDown($event, point.id)"
-            (pointermove)="onPointerMove($event)"
-            (pointerup)="onPointerUp($event)"
-            (pointercancel)="onPointerUp($event)"
           >
             <text
               [attr.x]="point.x"
