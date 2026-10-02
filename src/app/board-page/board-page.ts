@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { AppHeader } from '../app-header/app-header';
 import { CriteriaPanel } from '../criteria-panel/criteria-panel';
 import { CriterionGraph } from '../criterion-graph/criterion-graph';
 import { RankingList } from '../ranking-list/ranking-list';
@@ -8,7 +9,7 @@ import { XyGraph } from '../xy-graph/xy-graph';
 
 @Component({
   selector: 'app-board-page',
-  imports: [RankingList, CriteriaPanel, CriterionGraph, XyGraph],
+  imports: [AppHeader, RankingList, CriteriaPanel, CriterionGraph, XyGraph],
   templateUrl: './board-page.html',
   styleUrl: './board-page.css',
 })

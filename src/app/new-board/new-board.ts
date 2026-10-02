@@ -1,10 +1,11 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { AppHeader } from '../app-header/app-header';
 import { BoardService } from '../board.service';
 
 @Component({
   selector: 'app-new-board',
-  imports: [],
+  imports: [AppHeader],
   templateUrl: './new-board.html',
   styleUrl: './new-board.css',
 })

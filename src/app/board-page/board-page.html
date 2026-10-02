@@ -1,8 +1,8 @@
-<div class="toolbar">
+<app-header>
   <button type="button" class="share-btn" (click)="copyShareLink()">
     {{ linkCopied() ? 'Link copied!' : 'Copy share link' }}
   </button>
-</div>
+</app-header>
 
 @if (ranking.loading()) {
   <p class="loading">Loading board…</p>
