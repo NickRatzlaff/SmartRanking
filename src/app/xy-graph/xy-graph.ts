@@ -25,11 +25,35 @@ interface PointGroup {
 interface JitteredPoint extends GroupMember {
   x: number;
   y: number;
+  labelX: number;
+  labelY: number;
+  labelAnchor: 'start' | 'middle' | 'end';
 }
 
 /** Radius of the small cluster each overlapping group's points are spread around. */
 function clusterRadius(memberCount: number): number {
   return Math.max(16, 5 * memberCount);
+}
+
+/**
+ * Places a label on the outside of a jittered point, away from the cluster's center,
+ * so labels fan outward instead of bunching up toward the middle of the cluster.
+ * dx/dy is the unit direction from the cluster center to the point.
+ */
+function labelPlacement(
+  dx: number,
+  dy: number,
+  pointX: number,
+  pointY: number,
+): { labelX: number; labelY: number; labelAnchor: 'start' | 'middle' | 'end' } {
+  const horizontal = dx > 0.3 ? 1 : dx < -0.3 ? -1 : 0;
+  const vertical = dy > 0.3 ? 1 : dy < -0.3 ? -1 : 0;
+  const pad = 13;
+  return {
+    labelX: pointX + horizontal * pad,
+    labelY: vertical === -1 ? pointY - pad : vertical === 1 ? pointY + pad + 8 : pointY + 4,
+    labelAnchor: horizontal === 1 ? 'start' : horizontal === -1 ? 'end' : 'middle',
+  };
 }
 
 @Component({
@@ -110,12 +134,16 @@ export class XyGraph {
     if (!group) return [];
     const { members, x: centerX, y: centerY } = group;
     if (members.length === 1) {
-      return [{ ...members[0], x: centerX, y: centerY }];
+      return [{ ...members[0], x: centerX, y: centerY, ...labelPlacement(0, -1, centerX, centerY) }];
     }
     const radius = clusterRadius(members.length);
     return members.map((m, i) => {
       const angle = (2 * Math.PI * i) / members.length - Math.PI / 2;
-      return { ...m, x: centerX + radius * Math.cos(angle), y: centerY + radius * Math.sin(angle) };
+      const dx = Math.cos(angle);
+      const dy = Math.sin(angle);
+      const x = centerX + radius * dx;
+      const y = centerY + radius * dy;
+      return { ...m, x, y, ...labelPlacement(dx, dy, x, y) };
     });
   });
 

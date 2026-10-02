@@ -144,7 +144,12 @@
                     [attr.y2]="point.y"
                     class="leader-line"
                   />
-                  <text [attr.x]="point.x" [attr.y]="point.y - 14" class="point-label" text-anchor="middle">
+                  <text
+                    [attr.x]="point.labelX"
+                    [attr.y]="point.labelY"
+                    [attr.text-anchor]="point.labelAnchor"
+                    class="point-label"
+                  >
                     {{ point.name }}
                   </text>
                   <circle [attr.cx]="point.x" [attr.cy]="point.y" r="9" class="point-circle" />

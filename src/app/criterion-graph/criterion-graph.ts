@@ -4,12 +4,15 @@ import { RankingService } from '../ranking.service';
 
 const BASE_WIDTH = 500;
 const VIEWBOX_HEIGHT = 480;
-const MARGIN_TOP = 30;
+/** Tall enough that a staggered "far" label (see LABEL_OFFSETS) never gets clipped by the top edge. */
+const MARGIN_TOP = 44;
 const MARGIN_BOTTOM = 30;
 const MARGIN_LEFT = 50;
 const MARGIN_RIGHT = 40;
 /** Minimum horizontal room per object; below this, labels start to crowd even when staggered. */
 const MIN_LANE_WIDTH = 70;
+/** Lanes wider than this have enough room that labels don't need to be staggered at all. */
+const STAGGER_LANE_WIDTH = 100;
 /** Vertical distance from the point to its label, alternating per lane to avoid overlap. */
 const LABEL_OFFSETS = [14, 28];
 
@@ -60,6 +63,8 @@ export class CriterionGraph {
     if (!criterion) return [];
     const plotWidth = this.viewboxWidth() - MARGIN_LEFT - MARGIN_RIGHT;
     const laneCount = objects.length + 1;
+    const laneWidth = plotWidth / laneCount;
+    const needsStagger = laneWidth < STAGGER_LANE_WIDTH;
     return objects.map((obj, i) => {
       const value = obj.values[criterion.id] ?? 5;
       return {
@@ -68,7 +73,7 @@ export class CriterionGraph {
         value,
         x: MARGIN_LEFT + ((i + 1) * plotWidth) / laneCount,
         y: this.valueToY(value),
-        labelOffset: LABEL_OFFSETS[i % LABEL_OFFSETS.length],
+        labelOffset: needsStagger ? LABEL_OFFSETS[i % LABEL_OFFSETS.length] : LABEL_OFFSETS[0],
       };
     });
   });
