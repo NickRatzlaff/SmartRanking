@@ -11,10 +11,15 @@ const MARGIN_LEFT = 50;
 const MARGIN_RIGHT = 40;
 /** Minimum horizontal room per object; below this, labels start to crowd even when staggered. */
 const MIN_LANE_WIDTH = 70;
-/** Lanes wider than this have enough room that labels don't need to be staggered at all. */
-const STAGGER_LANE_WIDTH = 100;
-/** Vertical distance from the point to its label, alternating per lane to avoid overlap. */
+/** Vertical distance from the point to its label — [close tier, far tier]. */
 const LABEL_OFFSETS = [14, 28];
+/** Rough average glyph width at the label's font size, used to estimate label width from name length. */
+const AVG_CHAR_WIDTH = 6.5;
+const LABEL_PADDING = 10;
+
+function estimateLabelWidth(name: string): number {
+  return name.length * AVG_CHAR_WIDTH + LABEL_PADDING;
+}
 
 @Component({
   selector: 'app-criterion-graph',
@@ -63,9 +68,8 @@ export class CriterionGraph {
     if (!criterion) return [];
     const plotWidth = this.viewboxWidth() - MARGIN_LEFT - MARGIN_RIGHT;
     const laneCount = objects.length + 1;
-    const laneWidth = plotWidth / laneCount;
-    const needsStagger = laneWidth < STAGGER_LANE_WIDTH;
-    return objects.map((obj, i) => {
+
+    const raw = objects.map((obj, i) => {
       const value = obj.values[criterion.id] ?? 5;
       return {
         id: obj.id,
@@ -73,9 +77,31 @@ export class CriterionGraph {
         value,
         x: MARGIN_LEFT + ((i + 1) * plotWidth) / laneCount,
         y: this.valueToY(value),
-        labelOffset: needsStagger ? LABEL_OFFSETS[i % LABEL_OFFSETS.length] : LABEL_OFFSETS[0],
       };
     });
+
+    // Labels only risk overlapping other labels on the exact same row (same value,
+    // same height) — different rows are always far enough apart vertically to be safe.
+    const byValue = new Map<number, typeof raw>();
+    for (const p of raw) {
+      const list = byValue.get(p.value);
+      if (list) list.push(p);
+      else byValue.set(p.value, [p]);
+    }
+
+    const offsetById = new Map<string, number>();
+    for (const group of byValue.values()) {
+      const sorted = [...group].sort((a, b) => a.x - b.x);
+      const tierRightEdge = [-Infinity, -Infinity];
+      for (const p of sorted) {
+        const halfWidth = estimateLabelWidth(p.name) / 2;
+        const tier = p.x - halfWidth < tierRightEdge[0] + LABEL_PADDING ? 1 : 0;
+        offsetById.set(p.id, LABEL_OFFSETS[tier]);
+        tierRightEdge[tier] = p.x + halfWidth;
+      }
+    }
+
+    return raw.map((p) => ({ ...p, labelOffset: offsetById.get(p.id) ?? LABEL_OFFSETS[0] }));
   });
 
   protected readonly draggingId = signal<string | null>(null);
