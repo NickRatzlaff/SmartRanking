@@ -1,13 +1,17 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { MAX_VALUE, MIN_VALUE } from '../models';
 import { RankingService } from '../ranking.service';
 
-const VIEWBOX_WIDTH = 500;
+const BASE_WIDTH = 500;
 const VIEWBOX_HEIGHT = 480;
 const MARGIN_TOP = 30;
 const MARGIN_BOTTOM = 30;
 const MARGIN_LEFT = 50;
 const MARGIN_RIGHT = 40;
+/** Minimum horizontal room per object; below this, labels start to crowd even when staggered. */
+const MIN_LANE_WIDTH = 70;
+/** Vertical distance from the point to its label, alternating per lane to avoid overlap. */
+const LABEL_OFFSETS = [14, 28];
 
 @Component({
   selector: 'app-criterion-graph',
@@ -18,7 +22,6 @@ const MARGIN_RIGHT = 40;
 export class CriterionGraph {
   protected readonly ranking = inject(RankingService);
 
-  protected readonly viewboxWidth = VIEWBOX_WIDTH;
   protected readonly viewboxHeight = VIEWBOX_HEIGHT;
   protected readonly axisX = MARGIN_LEFT;
   protected readonly axisTopY = MARGIN_TOP;
@@ -28,7 +31,14 @@ export class CriterionGraph {
     (_, i) => MIN_VALUE + i,
   );
 
-  protected readonly plotRight = VIEWBOX_WIDTH - 10;
+  /** Widens the chart once there are too many objects to label comfortably at the base width. */
+  protected readonly viewboxWidth = computed(() => {
+    const count = this.ranking.objects().length;
+    const needed = MARGIN_LEFT + MARGIN_RIGHT + count * MIN_LANE_WIDTH;
+    return Math.max(BASE_WIDTH, needed);
+  });
+
+  protected readonly plotRight = computed(() => this.viewboxWidth() - 10);
 
   protected readonly criterion = computed(() => {
     const id = this.ranking.selectedCriteriaIds()[0];
@@ -48,7 +58,7 @@ export class CriterionGraph {
     const criterion = this.criterion();
     const objects = this.ranking.objects();
     if (!criterion) return [];
-    const plotWidth = VIEWBOX_WIDTH - MARGIN_LEFT - MARGIN_RIGHT;
+    const plotWidth = this.viewboxWidth() - MARGIN_LEFT - MARGIN_RIGHT;
     const laneCount = objects.length + 1;
     return objects.map((obj, i) => {
       const value = obj.values[criterion.id] ?? 5;
@@ -58,6 +68,7 @@ export class CriterionGraph {
         value,
         x: MARGIN_LEFT + ((i + 1) * plotWidth) / laneCount,
         y: this.valueToY(value),
+        labelOffset: LABEL_OFFSETS[i % LABEL_OFFSETS.length],
       };
     });
   });
@@ -77,7 +88,11 @@ export class CriterionGraph {
 
   protected onPointerDown(event: PointerEvent, objectId: string): void {
     const target = event.currentTarget as SVGElement;
-    target.setPointerCapture(event.pointerId);
+    try {
+      target.setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer already released (e.g. a stray/synthetic event) — safe to ignore.
+    }
     this.draggingId.set(objectId);
     this.updateFromPointer(event);
     event.preventDefault();
@@ -93,6 +108,16 @@ export class CriterionGraph {
     if (target.hasPointerCapture(event.pointerId)) {
       target.releasePointerCapture(event.pointerId);
     }
+    this.draggingId.set(null);
+  }
+
+  /**
+   * Safety net: if a pointerup/cancel is ever missed by the dragged element itself
+   * (e.g. the element was repositioned mid-drag), this guarantees the drag still ends.
+   */
+  @HostListener('window:pointerup')
+  @HostListener('window:pointercancel')
+  protected forceEndDrag(): void {
     this.draggingId.set(null);
   }
 

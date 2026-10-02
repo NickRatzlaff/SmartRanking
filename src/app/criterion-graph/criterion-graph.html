@@ -3,72 +3,83 @@
     <h2>{{ c.name }}</h2>
     <p class="hint">Drag the points up or down to adjust each object's value.</p>
 
-    <svg [attr.viewBox]="'0 0 ' + viewboxWidth + ' ' + viewboxHeight" class="graph-svg">
-      <defs>
-        <linearGradient
-          id="criterionGradient"
-          gradientUnits="userSpaceOnUse"
-          x1="0"
-          [attr.y1]="gradientY().y1"
-          x2="0"
-          [attr.y2]="gradientY().y2"
-        >
-          <stop offset="0%" stop-color="hsl(0, 55%, 85%)" />
-          <stop offset="50%" stop-color="hsl(55, 55%, 85%)" />
-          <stop offset="100%" stop-color="hsl(120, 45%, 82%)" />
-        </linearGradient>
-      </defs>
+    <div class="graph-scroll">
+      <svg
+        [attr.viewBox]="'0 0 ' + viewboxWidth() + ' ' + viewboxHeight"
+        [style.width.px]="viewboxWidth()"
+        class="graph-svg"
+      >
+        <defs>
+          <linearGradient
+            id="criterionGradient"
+            gradientUnits="userSpaceOnUse"
+            x1="0"
+            [attr.y1]="gradientY().y1"
+            x2="0"
+            [attr.y2]="gradientY().y2"
+          >
+            <stop offset="0%" stop-color="hsl(0, 55%, 85%)" />
+            <stop offset="50%" stop-color="hsl(55, 55%, 85%)" />
+            <stop offset="100%" stop-color="hsl(120, 45%, 82%)" />
+          </linearGradient>
+        </defs>
 
-      <rect
-        [attr.x]="axisX"
-        [attr.y]="axisTopY"
-        [attr.width]="plotRight - axisX"
-        [attr.height]="axisBottomY - axisTopY"
-        fill="url(#criterionGradient)"
-      />
-
-      <!-- gridlines + tick labels -->
-      @for (tick of ticks; track tick) {
-        <line
-          [attr.x1]="axisX"
-          [attr.x2]="plotRight"
-          [attr.y1]="axisBottomY - ((tick - 1) / 9) * (axisBottomY - axisTopY)"
-          [attr.y2]="axisBottomY - ((tick - 1) / 9) * (axisBottomY - axisTopY)"
-          class="gridline"
+        <rect
+          [attr.x]="axisX"
+          [attr.y]="axisTopY"
+          [attr.width]="plotRight() - axisX"
+          [attr.height]="axisBottomY - axisTopY"
+          fill="url(#criterionGradient)"
         />
-        <text
-          [attr.x]="axisX - 10"
-          [attr.y]="axisBottomY - ((tick - 1) / 9) * (axisBottomY - axisTopY) + 4"
-          class="tick-label"
-          text-anchor="end"
-        >
-          {{ tick }}
-        </text>
-      }
 
-      <!-- axis line -->
-      <line [attr.x1]="axisX" [attr.x2]="axisX" [attr.y1]="axisTopY" [attr.y2]="axisBottomY" class="axis-line" />
+        <!-- gridlines + tick labels -->
+        @for (tick of ticks; track tick) {
+          <line
+            [attr.x1]="axisX"
+            [attr.x2]="plotRight()"
+            [attr.y1]="axisBottomY - ((tick - 1) / 9) * (axisBottomY - axisTopY)"
+            [attr.y2]="axisBottomY - ((tick - 1) / 9) * (axisBottomY - axisTopY)"
+            class="gridline"
+          />
+          <text
+            [attr.x]="axisX - 10"
+            [attr.y]="axisBottomY - ((tick - 1) / 9) * (axisBottomY - axisTopY) + 4"
+            class="tick-label"
+            text-anchor="end"
+          >
+            {{ tick }}
+          </text>
+        }
 
-      <!-- points -->
-      @for (point of points(); track point.id) {
-        <g
-          class="point-group"
-          [class.dragging]="draggingId() === point.id"
-          (pointerdown)="onPointerDown($event, point.id)"
-          (pointermove)="onPointerMove($event)"
-          (pointerup)="onPointerUp($event)"
-          (pointercancel)="onPointerUp($event)"
-        >
-          <text [attr.x]="point.x" [attr.y]="point.y - 14" class="point-label" text-anchor="middle">
-            {{ point.name }}
-          </text>
-          <circle [attr.cx]="point.x" [attr.cy]="point.y" r="9" class="point-circle" />
-          <text [attr.x]="point.x" [attr.y]="point.y + 24" class="point-value" text-anchor="middle">
-            {{ point.value }}
-          </text>
-        </g>
-      }
-    </svg>
+        <!-- axis line -->
+        <line [attr.x1]="axisX" [attr.x2]="axisX" [attr.y1]="axisTopY" [attr.y2]="axisBottomY" class="axis-line" />
+
+        <!-- points -->
+        @for (point of points(); track point.id) {
+          <g
+            class="point-group"
+            [class.dragging]="draggingId() === point.id"
+            (pointerdown)="onPointerDown($event, point.id)"
+            (pointermove)="onPointerMove($event)"
+            (pointerup)="onPointerUp($event)"
+            (pointercancel)="onPointerUp($event)"
+          >
+            <text
+              [attr.x]="point.x"
+              [attr.y]="point.y - point.labelOffset"
+              class="point-label"
+              text-anchor="middle"
+            >
+              {{ point.name }}
+            </text>
+            <circle [attr.cx]="point.x" [attr.cy]="point.y" r="9" class="point-circle" />
+            <text [attr.x]="point.x" [attr.y]="point.y + 24" class="point-value" text-anchor="middle">
+              {{ point.value }}
+            </text>
+          </g>
+        }
+      </svg>
+    </div>
   } @else {
     <p class="empty-state">Select a criterion to see its graph.</p>
   }

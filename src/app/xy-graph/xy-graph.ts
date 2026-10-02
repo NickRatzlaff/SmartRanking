@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { MAX_VALUE, MIN_VALUE } from '../models';
 import { RankingService } from '../ranking.service';
 
@@ -8,60 +8,28 @@ const MARGIN_BOTTOM = 60;
 const MARGIN_LEFT = 60;
 const MARGIN_RIGHT = 30;
 
-/** Points whose raw positions fall within this distance are treated as overlapping. */
-const JITTER_THRESHOLD = 16;
+interface GroupMember {
+  id: string;
+  name: string;
+  xValue: number;
+  yValue: number;
+}
 
-interface RawPoint {
+interface PointGroup {
+  key: string;
+  x: number;
+  y: number;
+  members: GroupMember[];
+}
+
+interface JitteredPoint extends GroupMember {
   x: number;
   y: number;
 }
 
-/** Groups points into clusters of mutually-nearby positions (chained, not just pairwise). */
-function clusterByProximity<T extends RawPoint>(items: T[], threshold: number): T[][] {
-  const clusters: T[][] = [];
-  const visited = new Set<number>();
-  for (let i = 0; i < items.length; i++) {
-    if (visited.has(i)) continue;
-    const cluster = [items[i]];
-    visited.add(i);
-    let frontier = [i];
-    while (frontier.length > 0) {
-      const next: number[] = [];
-      for (const idx of frontier) {
-        for (let j = 0; j < items.length; j++) {
-          if (visited.has(j)) continue;
-          const dx = items[idx].x - items[j].x;
-          const dy = items[idx].y - items[j].y;
-          if (Math.sqrt(dx * dx + dy * dy) <= threshold) {
-            visited.add(j);
-            cluster.push(items[j]);
-            next.push(j);
-          }
-        }
-      }
-      frontier = next;
-    }
-    clusters.push(cluster);
-  }
-  return clusters;
-}
-
-/** Spreads overlapping points evenly around their shared centroid so each stays clickable. */
-function jitterCluster<T extends RawPoint>(cluster: T[]): (T & RawPoint)[] {
-  if (cluster.length === 1) return cluster;
-  const centroid = {
-    x: cluster.reduce((sum, p) => sum + p.x, 0) / cluster.length,
-    y: cluster.reduce((sum, p) => sum + p.y, 0) / cluster.length,
-  };
-  const radius = Math.max(14, 4 * cluster.length);
-  return cluster.map((p, i) => {
-    const angle = (2 * Math.PI * i) / cluster.length - Math.PI / 2;
-    return {
-      ...p,
-      x: centroid.x + radius * Math.cos(angle),
-      y: centroid.y + radius * Math.sin(angle),
-    };
-  });
+/** Radius of the small cluster each overlapping group's points are spread around. */
+function clusterRadius(memberCount: number): number {
+  return Math.max(16, 5 * memberCount);
 }
 
 @Component({
@@ -112,21 +80,59 @@ export class XyGraph {
     return { x1: worstX, y1: worstY, x2: bestX, y2: bestY };
   });
 
-  protected readonly points = computed(() => {
+  /** Objects grouped by their exact (x, y) value pair — anyone sharing a spot lands in the same group. */
+  protected readonly groups = computed<PointGroup[]>(() => {
     const xc = this.xCriterion();
     const yc = this.yCriterion();
     if (!xc || !yc) return [];
-    const rawPoints = this.ranking.objects().map((obj) => {
+    const byKey = new Map<string, PointGroup>();
+    for (const obj of this.ranking.objects()) {
       const xValue = obj.values[xc.id] ?? 5;
       const yValue = obj.values[yc.id] ?? 5;
-      const x = this.valueToX(xValue);
-      const y = this.valueToY(yValue);
-      return { id: obj.id, name: obj.name, xValue, yValue, x, y, rawX: x, rawY: y };
-    });
-    return clusterByProximity(rawPoints, JITTER_THRESHOLD).flatMap(jitterCluster);
+      const key = `${xValue},${yValue}`;
+      let group = byKey.get(key);
+      if (!group) {
+        group = { key, x: this.valueToX(xValue), y: this.valueToY(yValue), members: [] };
+        byKey.set(key, group);
+      }
+      group.members.push({ id: obj.id, name: obj.name, xValue, yValue });
+    }
+    return [...byKey.values()];
   });
 
+  /** Group currently expanded into individual, draggable points — via hover, or while a member is being dragged. */
+  protected readonly activeGroupKey = signal<string | null>(null);
+  protected readonly hoveredSingleId = signal<string | null>(null);
   protected readonly draggingId = signal<string | null>(null);
+
+  protected readonly expandedPoints = computed<JitteredPoint[]>(() => {
+    const group = this.groups().find((g) => g.key === this.activeGroupKey());
+    if (!group) return [];
+    const { members, x: centerX, y: centerY } = group;
+    if (members.length === 1) {
+      return [{ ...members[0], x: centerX, y: centerY }];
+    }
+    const radius = clusterRadius(members.length);
+    return members.map((m, i) => {
+      const angle = (2 * Math.PI * i) / members.length - Math.PI / 2;
+      return { ...m, x: centerX + radius * Math.cos(angle), y: centerY + radius * Math.sin(angle) };
+    });
+  });
+
+  protected clusterHoverRadius(memberCount: number): number {
+    return clusterRadius(memberCount) + 12;
+  }
+
+  protected expandGroup(key: string): void {
+    this.activeGroupKey.set(key);
+  }
+
+  protected collapseGroup(key: string): void {
+    if (this.draggingId() !== null) return; // keep expanded while a member is actively being dragged
+    if (this.activeGroupKey() === key) {
+      this.activeGroupKey.set(null);
+    }
+  }
 
   private valueToX(value: number): number {
     const frac = (value - MIN_VALUE) / (MAX_VALUE - MIN_VALUE);
@@ -152,7 +158,11 @@ export class XyGraph {
 
   protected onPointerDown(event: PointerEvent, objectId: string): void {
     const target = event.currentTarget as SVGElement;
-    target.setPointerCapture(event.pointerId);
+    try {
+      target.setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer already released (e.g. a stray/synthetic event) — safe to ignore.
+    }
     this.draggingId.set(objectId);
     this.updateFromPointer(event);
     event.preventDefault();
@@ -169,6 +179,18 @@ export class XyGraph {
       target.releasePointerCapture(event.pointerId);
     }
     this.draggingId.set(null);
+    this.activeGroupKey.set(null);
+  }
+
+  /**
+   * Safety net: if a pointerup/cancel is ever missed by the dragged element itself
+   * (e.g. the element was repositioned mid-drag), this guarantees the drag still ends.
+   */
+  @HostListener('window:pointerup')
+  @HostListener('window:pointercancel')
+  protected forceEndDrag(): void {
+    this.draggingId.set(null);
+    this.activeGroupKey.set(null);
   }
 
   private updateFromPointer(event: PointerEvent): void {

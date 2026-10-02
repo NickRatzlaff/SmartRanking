@@ -17,8 +17,13 @@
   font-size: 0.85rem;
 }
 
-.graph-svg {
+.graph-scroll {
   width: 100%;
+  overflow-x: auto;
+}
+
+.graph-svg {
+  display: block;
   height: 480px;
   touch-action: none;
 }

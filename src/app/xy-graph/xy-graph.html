@@ -99,32 +99,67 @@
         </text>
 
         <!-- points -->
-        @for (point of points(); track point.id) {
-          <g
-            class="point-group"
-            [class.dragging]="draggingId() === point.id"
-            (pointerdown)="onPointerDown($event, point.id)"
-            (pointermove)="onPointerMove($event)"
-            (pointerup)="onPointerUp($event)"
-            (pointercancel)="onPointerUp($event)"
-          >
-            @if (point.x !== point.rawX || point.y !== point.rawY) {
-              <line
-                [attr.x1]="point.rawX"
-                [attr.y1]="point.rawY"
-                [attr.x2]="point.x"
-                [attr.y2]="point.y"
-                class="leader-line"
+        @for (group of groups(); track group.key) {
+          @if (group.members.length === 1) {
+            <!-- standalone point: just a dot; hover (or drag) reveals its name -->
+            <g
+              class="point-group"
+              [class.dragging]="draggingId() === group.members[0].id"
+              (pointerenter)="hoveredSingleId.set(group.members[0].id)"
+              (pointerleave)="hoveredSingleId.set(null)"
+              (pointerdown)="onPointerDown($event, group.members[0].id)"
+              (pointermove)="onPointerMove($event)"
+              (pointerup)="onPointerUp($event)"
+              (pointercancel)="onPointerUp($event)"
+            >
+              @if (hoveredSingleId() === group.members[0].id || draggingId() === group.members[0].id) {
+                <text [attr.x]="group.x" [attr.y]="group.y - 14" class="point-label" text-anchor="middle">
+                  {{ group.members[0].name }}
+                </text>
+              }
+              <circle [attr.cx]="group.x" [attr.cy]="group.y" r="9" class="point-circle" />
+            </g>
+          } @else if (activeGroupKey() === group.key) {
+            <!-- expanded: spread members around their shared spot so each is individually draggable -->
+            <g (pointerleave)="collapseGroup(group.key)">
+              <circle
+                [attr.cx]="group.x"
+                [attr.cy]="group.y"
+                [attr.r]="clusterHoverRadius(group.members.length)"
+                class="hover-zone"
               />
-            }
-            <text [attr.x]="point.x" [attr.y]="point.y - 14" class="point-label" text-anchor="middle">
-              {{ point.name }}
-            </text>
-            <circle [attr.cx]="point.x" [attr.cy]="point.y" r="9" class="point-circle" />
-            <text [attr.x]="point.x" [attr.y]="point.y + 24" class="point-value" text-anchor="middle">
-              ({{ point.xValue }}, {{ point.yValue }})
-            </text>
-          </g>
+              @for (point of expandedPoints(); track point.id) {
+                <g
+                  class="point-group"
+                  [class.dragging]="draggingId() === point.id"
+                  (pointerdown)="onPointerDown($event, point.id)"
+                  (pointermove)="onPointerMove($event)"
+                  (pointerup)="onPointerUp($event)"
+                  (pointercancel)="onPointerUp($event)"
+                >
+                  <line
+                    [attr.x1]="group.x"
+                    [attr.y1]="group.y"
+                    [attr.x2]="point.x"
+                    [attr.y2]="point.y"
+                    class="leader-line"
+                  />
+                  <text [attr.x]="point.x" [attr.y]="point.y - 14" class="point-label" text-anchor="middle">
+                    {{ point.name }}
+                  </text>
+                  <circle [attr.cx]="point.x" [attr.cy]="point.y" r="9" class="point-circle" />
+                </g>
+              }
+            </g>
+          } @else {
+            <!-- collapsed group: one dot + a count badge; hover to spread apart -->
+            <g class="point-group group-dot" (pointerenter)="expandGroup(group.key)">
+              <circle [attr.cx]="group.x" [attr.cy]="group.y" r="9" class="point-circle" />
+              <text [attr.x]="group.x" [attr.y]="group.y - 14" class="group-badge" text-anchor="middle">
+                ({{ group.members.length }})
+              </text>
+            </g>
+          }
         }
       </svg>
   } @else {

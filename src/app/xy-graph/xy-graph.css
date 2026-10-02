@@ -51,12 +51,27 @@
   pointer-events: none;
 }
 
+.hover-zone {
+  fill: transparent;
+}
+
 .point-group {
   cursor: grab;
 }
 
 .point-group.dragging {
   cursor: grabbing;
+}
+
+.point-group.group-dot {
+  cursor: pointer;
+}
+
+.group-badge {
+  font-size: 11px;
+  font-weight: 600;
+  fill: #555;
+  user-select: none;
 }
 
 .point-circle {
@@ -74,12 +89,6 @@
   font-size: 12px;
   font-weight: 500;
   fill: #333;
-  user-select: none;
-}
-
-.point-value {
-  font-size: 11px;
-  fill: #666;
   user-select: none;
 }
 
