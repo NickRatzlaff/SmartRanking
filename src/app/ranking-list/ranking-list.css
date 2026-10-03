@@ -123,6 +123,23 @@
   color: #666;
 }
 
+.notes-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.notes-field textarea {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font: inherit;
+  resize: vertical;
+}
+
 .empty-state {
   text-align: center;
   color: #999;

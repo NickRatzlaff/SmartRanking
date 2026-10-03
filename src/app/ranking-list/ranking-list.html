@@ -51,6 +51,15 @@
             } @empty {
               <p class="empty-state">Add a criterion to set values.</p>
             }
+            <label class="notes-field">
+              <span>Notes</span>
+              <textarea
+                rows="3"
+                placeholder="Add notes…"
+                [value]="obj.notes"
+                (input)="onNotesChange(obj.id, $event)"
+              ></textarea>
+            </label>
           </div>
         }
       </li>

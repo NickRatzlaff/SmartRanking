@@ -27,6 +27,7 @@ create table ranked_objects (
   id uuid primary key default gen_random_uuid(),
   board_id uuid not null references boards(id) on delete cascade,
   name text not null,
+  notes text not null default '',
   created_at timestamptz not null default now()
 );
 

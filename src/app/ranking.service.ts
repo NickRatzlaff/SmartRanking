@@ -189,6 +189,7 @@ export class RankingService {
         id: r['id'],
         name: r['name'],
         values: valuesByObject.get(r['id']) ?? {},
+        notes: r['notes'] ?? '',
       })),
     );
   }
@@ -299,11 +300,11 @@ export class RankingService {
     for (const c of this.criteria()) {
       values[c.id] = DEFAULT_VALUE;
     }
-    this.objects.update((list) => [...list, { id, name: trimmed, values }]);
+    this.objects.update((list) => [...list, { id, name: trimmed, values, notes: '' }]);
 
     supabase
       .from('ranked_objects')
-      .insert({ id, board_id: boardId, name: trimmed })
+      .insert({ id, board_id: boardId, name: trimmed, notes: '' })
       .then(({ error }) => logIfError(error));
 
     const valueRows = Object.entries(values).map(([criterionId, value]) => ({
@@ -358,6 +359,20 @@ export class RankingService {
           { object_id: objectId, criterion_id: criterionId, board_id: boardId, value: clamped },
           { onConflict: 'object_id,criterion_id' },
         )
+        .then(({ error }) => logIfError(error));
+    });
+  }
+
+  setNotes(objectId: string, notes: string): void {
+    this.objects.update((list) =>
+      list.map((o) => (o.id === objectId ? { ...o, notes } : o)),
+    );
+    if (!this.boardId) return;
+    this.debounceWrite(`notes:${objectId}`, () => {
+      supabase
+        .from('ranked_objects')
+        .update({ notes })
+        .eq('id', objectId)
         .then(({ error }) => logIfError(error));
     });
   }

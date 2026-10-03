@@ -43,6 +43,11 @@ export class RankingList {
     this.ranking.endAdjust();
   }
 
+  protected onNotesChange(objectId: string, event: Event): void {
+    const textarea = event.target as HTMLTextAreaElement;
+    this.ranking.setNotes(objectId, textarea.value);
+  }
+
   /** 0-100 fill percentage for the score bar; score is always within [MIN_VALUE, MAX_VALUE]. */
   private scorePercent(score: number): number {
     const pct = ((score - MIN_VALUE) / (MAX_VALUE - MIN_VALUE)) * 100;

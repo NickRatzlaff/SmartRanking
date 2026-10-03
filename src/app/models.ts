@@ -9,6 +9,7 @@ export interface RankedObject {
   id: string;
   name: string;
   values: Record<string, number>; // criterionId -> value (1-10)
+  notes: string;
 }
 
 export const MIN_VALUE = 1;
