@@ -58,6 +58,7 @@
                 placeholder="Add notes…"
                 [value]="obj.notes"
                 (input)="onNotesChange(obj.id, $event)"
+                (blur)="onNotesBlur()"
               ></textarea>
             </label>
           </div>

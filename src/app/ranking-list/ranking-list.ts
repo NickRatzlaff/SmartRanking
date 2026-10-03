@@ -44,8 +44,16 @@ export class RankingList {
   }
 
   protected onNotesChange(objectId: string, event: Event): void {
+    // Freezes incoming realtime refetches until onNotesBlur, the same guard used for
+    // slider drags — otherwise a debounced write's own realtime echo can race ahead of
+    // further keystrokes and overwrite what's being typed with a slightly stale value.
+    this.ranking.beginAdjust();
     const textarea = event.target as HTMLTextAreaElement;
     this.ranking.setNotes(objectId, textarea.value);
+  }
+
+  protected onNotesBlur(): void {
+    this.ranking.endAdjust();
   }
 
   /** 0-100 fill percentage for the score bar; score is always within [MIN_VALUE, MAX_VALUE]. */
