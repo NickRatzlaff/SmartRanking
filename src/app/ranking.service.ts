@@ -1,6 +1,6 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, effect, signal } from '@angular/core';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { Criterion, DEFAULT_VALUE, MAX_VALUE, MIN_VALUE, RankedObject } from './models';
+import { Criterion, DEFAULT_VALUE, MAX_VALUE, MIN_VALUE, RankedObject, ThemeName } from './models';
 import { supabase } from './supabase.client';
 
 export interface ScoredObject extends RankedObject {
@@ -30,6 +30,9 @@ export class RankingService {
 
   /** True while the initial fetch for the current board is in flight. */
   readonly loading = signal(true);
+
+  /** The connected board's theme — synced via Supabase so a shared link opens pre-themed. */
+  readonly theme = signal<ThemeName>('default');
 
   readonly totalWeight = computed(() => this.criteria().reduce((sum, c) => sum + c.weight, 0));
 
@@ -75,6 +78,14 @@ export class RankingService {
   private refetchTimer: ReturnType<typeof setTimeout> | null = null;
   private refetchDeferred = false;
 
+  constructor() {
+    // Applies live regardless of source: our own selection, the initial fetch, or a
+    // realtime update from a collaborator who changed it on their end.
+    effect(() => {
+      document.documentElement.setAttribute('data-theme', this.theme());
+    });
+  }
+
   /** Call when a slider drag starts, to freeze row order until endAdjust(). */
   beginAdjust(): void {
     if (this.isAdjusting()) return;
@@ -101,12 +112,18 @@ export class RankingService {
     this.loading.set(true);
     this.criteria.set([]);
     this.objects.set([]);
+    this.theme.set('default');
 
     await this.refetchAll();
     this.loading.set(false);
 
     this.channel = supabase
       .channel(`board-${boardId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'boards', filter: `id=eq.${boardId}` },
+        () => this.scheduleRefetch(),
+      )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'criteria', filter: `board_id=eq.${boardId}` },
@@ -171,12 +188,16 @@ export class RankingService {
   private async refetchAll(): Promise<void> {
     const boardId = this.boardId;
     if (!boardId) return;
-    const [{ data: criteriaRows }, { data: objectRows }, { data: valueRows }] = await Promise.all([
-      supabase.from('criteria').select('*').eq('board_id', boardId).order('created_at'),
-      supabase.from('ranked_objects').select('*').eq('board_id', boardId).order('created_at'),
-      supabase.from('object_values').select('*').eq('board_id', boardId),
-    ]);
+    const [{ data: boardRow }, { data: criteriaRows }, { data: objectRows }, { data: valueRows }] =
+      await Promise.all([
+        supabase.from('boards').select('theme').eq('id', boardId).maybeSingle(),
+        supabase.from('criteria').select('*').eq('board_id', boardId).order('created_at'),
+        supabase.from('ranked_objects').select('*').eq('board_id', boardId).order('created_at'),
+        supabase.from('object_values').select('*').eq('board_id', boardId),
+      ]);
     if (this.boardId !== boardId) return; // a newer connect() superseded this fetch
+
+    this.theme.set((boardRow?.['theme'] as ThemeName | undefined) ?? 'default');
 
     this.criteria.set(
       (criteriaRows ?? []).map((r) => ({
@@ -370,6 +391,16 @@ export class RankingService {
         )
         .then(({ error }) => logIfError(error));
     });
+  }
+
+  setTheme(theme: ThemeName): void {
+    this.theme.set(theme);
+    if (!this.boardId) return;
+    supabase
+      .from('boards')
+      .update({ theme })
+      .eq('id', this.boardId)
+      .then(({ error }) => logIfError(error));
   }
 
   setNotes(objectId: string, notes: string): void {

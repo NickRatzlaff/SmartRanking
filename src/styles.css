@@ -2,9 +2,83 @@
   box-sizing: border-box;
 }
 
+:root {
+  --color-bg: #f4f5f7;
+  --color-surface: #ffffff;
+  --color-border: #e2e2e2;
+  --color-border-strong: #cccccc;
+  --color-text: #1a1a1a;
+  --color-text-secondary: #666666;
+  --color-text-muted: #999999;
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2f6fd6;
+  --color-accent-contrast: #ffffff;
+  --color-danger: #d33333;
+  --bg-image: none;
+
+  /* Chart-specific: need their own light/dark pairing since they sit on top of
+     a pastel gradient that itself never changes with the theme. */
+  --color-chart-grid: rgba(0, 0, 0, 0.12);
+  --color-chart-axis: rgba(0, 0, 0, 0.3);
+  --color-chart-tick: rgba(0, 0, 0, 0.55);
+}
+
+:root[data-theme='qhs'] {
+  --color-bg: #000000;
+  --color-surface: rgba(26, 26, 26, 0.92);
+  --color-border: #333333;
+  --color-border-strong: #4d4d4d;
+  --color-text: #f5f5f5;
+  --color-text-secondary: #bbbbbb;
+  --color-text-muted: #888888;
+  --color-accent: #e0263d;
+  --color-accent-hover: #c21f33;
+  --color-accent-contrast: #ffffff;
+  --color-danger: #ff5f5f;
+  --bg-image: url('/qhs-background.jpg');
+
+  --color-chart-grid: rgba(255, 255, 255, 0.14);
+  --color-chart-axis: rgba(255, 255, 255, 0.35);
+  --color-chart-tick: rgba(255, 255, 255, 0.6);
+}
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  background: #f4f5f7;
-  color: #1a1a1a;
+  background-color: var(--color-bg);
+  background-image: var(--bg-image);
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: contain;
+  background-attachment: fixed;
+  color: var(--color-text);
+  min-height: 100vh;
+}
+
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+}
+
+input[type='text'],
+textarea,
+select {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 4px;
+}
+
+button {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 6px;
+}
+
+input[type='range'],
+input[type='checkbox'] {
+  accent-color: var(--color-accent);
 }

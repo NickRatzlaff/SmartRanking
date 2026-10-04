@@ -11,6 +11,7 @@ create extension if not exists pgcrypto;
 create table boards (
   id uuid primary key default gen_random_uuid(),
   name text not null default 'Untitled Ranking',
+  theme text not null default 'default',
   created_at timestamptz not null default now()
 );
 
@@ -57,6 +58,7 @@ create policy "public full access" on ranked_objects for all using (true) with c
 create policy "public full access" on object_values for all using (true) with check (true);
 
 -- Stream inserts/updates/deletes on these tables to subscribed clients.
+alter publication supabase_realtime add table boards;
 alter publication supabase_realtime add table criteria;
 alter publication supabase_realtime add table ranked_objects;
 alter publication supabase_realtime add table object_values;

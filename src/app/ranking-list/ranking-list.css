@@ -1,8 +1,8 @@
 .ranking-list {
   flex: 1;
   padding: 1rem;
-  background: #fff;
-  border: 1px solid #e2e2e2;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
 }
 
@@ -20,7 +20,7 @@
 }
 
 .object-card {
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .object-row {
@@ -42,18 +42,18 @@
 }
 
 .object-summary:hover {
-  background: #f7f8fa;
+  background: var(--color-bg);
 }
 
 .chevron {
   width: 1rem;
-  color: #999;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
 }
 
 .rank {
   width: 1.5rem;
-  color: #999;
+  color: var(--color-text-muted);
   font-size: 0.9rem;
 }
 
@@ -67,7 +67,7 @@
   flex-shrink: 0;
   height: 6px;
   border-radius: 3px;
-  background: #eee;
+  background: var(--color-border);
   overflow: hidden;
 }
 
@@ -83,13 +83,13 @@
 .remove-btn {
   border: none;
   background: none;
-  color: #999;
+  color: var(--color-text-muted);
   cursor: pointer;
   padding: 0 0.75rem;
 }
 
 .remove-btn:hover {
-  color: #d33;
+  color: var(--color-danger);
 }
 
 .object-details {
@@ -109,7 +109,7 @@
   width: 6rem;
   flex-shrink: 0;
   font-size: 0.85rem;
-  color: #555;
+  color: var(--color-text-secondary);
 }
 
 .detail-row input[type='range'] {
@@ -120,7 +120,7 @@
   min-width: 1.5ch;
   text-align: right;
   font-size: 0.85rem;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .notes-field {
@@ -129,20 +129,18 @@
   gap: 0.25rem;
   margin-top: 0.25rem;
   font-size: 0.85rem;
-  color: #555;
+  color: var(--color-text-secondary);
 }
 
 .notes-field textarea {
   padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
   font: inherit;
   resize: vertical;
 }
 
 .empty-state {
   text-align: center;
-  color: #999;
+  color: var(--color-text-muted);
   padding: 1.5rem;
 }
 

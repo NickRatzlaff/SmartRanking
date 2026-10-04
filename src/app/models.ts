@@ -12,6 +12,8 @@ export interface RankedObject {
   notes: string;
 }
 
+export type ThemeName = 'default' | 'qhs';
+
 export const MIN_VALUE = 1;
 export const MAX_VALUE = 10;
 export const DEFAULT_VALUE = 5;

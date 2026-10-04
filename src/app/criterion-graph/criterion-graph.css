@@ -1,8 +1,8 @@
 .criterion-graph {
   flex: 1;
   padding: 1rem;
-  background: #fff;
-  border: 1px solid #e2e2e2;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
 }
 
@@ -13,7 +13,7 @@
 
 .hint {
   margin: 0 0 0.5rem;
-  color: #888;
+  color: var(--color-text-muted);
   font-size: 0.85rem;
 }
 
@@ -29,17 +29,17 @@
 }
 
 .gridline {
-  stroke: rgba(0, 0, 0, 0.12);
+  stroke: var(--color-chart-grid);
   stroke-width: 1;
 }
 
 .tick-label {
   font-size: 11px;
-  fill: rgba(0, 0, 0, 0.55);
+  fill: var(--color-chart-tick);
 }
 
 .axis-line {
-  stroke: rgba(0, 0, 0, 0.3);
+  stroke: var(--color-chart-axis);
   stroke-width: 2;
 }
 
@@ -52,13 +52,13 @@
 }
 
 .point-circle {
-  fill: #3b82f6;
+  fill: var(--color-accent);
   stroke: #fff;
   stroke-width: 2;
 }
 
 .point-group.dragging .point-circle {
-  fill: #1d4ed8;
+  fill: var(--color-accent-hover);
   r: 11;
 }
 
@@ -76,5 +76,5 @@
 }
 
 .empty-state {
-  color: #999;
+  color: var(--color-text-muted);
 }

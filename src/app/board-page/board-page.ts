@@ -5,11 +5,12 @@ import { CriteriaPanel } from '../criteria-panel/criteria-panel';
 import { CriterionGraph } from '../criterion-graph/criterion-graph';
 import { RankingList } from '../ranking-list/ranking-list';
 import { RankingService } from '../ranking.service';
+import { ThemeSelector } from '../theme-selector/theme-selector';
 import { XyGraph } from '../xy-graph/xy-graph';
 
 @Component({
   selector: 'app-board-page',
-  imports: [AppHeader, RankingList, CriteriaPanel, CriterionGraph, XyGraph],
+  imports: [AppHeader, RankingList, CriteriaPanel, CriterionGraph, XyGraph, ThemeSelector],
   templateUrl: './board-page.html',
   styleUrl: './board-page.css',
 })
