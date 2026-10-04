@@ -86,7 +86,11 @@ export class RankingService {
     this.isAdjusting.set(false);
     if (this.refetchDeferred) {
       this.refetchDeferred = false;
-      this.scheduleRefetch();
+      // Longer than REFETCH_DEBOUNCE_MS on purpose: this gesture's own debounced write
+      // (WRITE_DEBOUNCE_MS after its last input, which just happened) hasn't landed yet.
+      // Catching up at the normal short delay would race ahead of it and refetch the
+      // pre-write value, reverting what was just typed/dragged right back.
+      this.scheduleRefetch(WRITE_DEBOUNCE_MS + 100);
     }
   }
 
@@ -146,7 +150,7 @@ export class RankingService {
     this.boardId = null;
   }
 
-  private scheduleRefetch(): void {
+  private scheduleRefetch(delayMs = REFETCH_DEBOUNCE_MS): void {
     // Don't yank the board out from under an in-progress local drag; catch up once it ends.
     if (this.isAdjusting()) {
       this.refetchDeferred = true;
@@ -155,8 +159,13 @@ export class RankingService {
     if (this.refetchTimer) clearTimeout(this.refetchTimer);
     this.refetchTimer = setTimeout(() => {
       this.refetchTimer = null;
+      // Re-check: a drag/edit may have started in the gap between scheduling and firing.
+      if (this.isAdjusting()) {
+        this.refetchDeferred = true;
+        return;
+      }
       this.refetchAll();
-    }, REFETCH_DEBOUNCE_MS);
+    }, delayMs);
   }
 
   private async refetchAll(): Promise<void> {

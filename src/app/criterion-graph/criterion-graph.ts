@@ -125,6 +125,7 @@ export class CriterionGraph {
     } catch {
       // Pointer already released (e.g. a stray/synthetic event) — safe to ignore.
     }
+    this.ranking.beginAdjust();
     this.draggingId.set(objectId);
     this.updateFromPointer(event);
     event.preventDefault();
@@ -141,16 +142,19 @@ export class CriterionGraph {
       svg.releasePointerCapture(event.pointerId);
     }
     this.draggingId.set(null);
+    this.ranking.endAdjust();
   }
 
   /**
    * Safety net: if a pointerup/cancel is ever missed by the dragged element itself
-   * (e.g. the element was repositioned mid-drag), this guarantees the drag still ends.
+   * (e.g. the element was repositioned mid-drag), this guarantees the drag still ends
+   * and realtime sync (paused by beginAdjust) resumes instead of staying stuck frozen.
    */
   @HostListener('window:pointerup')
   @HostListener('window:pointercancel')
   protected forceEndDrag(): void {
     this.draggingId.set(null);
+    this.ranking.endAdjust();
   }
 
   private updateFromPointer(event: PointerEvent): void {
