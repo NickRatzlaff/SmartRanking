@@ -21,7 +21,10 @@
 .add-btn {
   width: 1.8rem;
   height: 1.8rem;
-  padding: 0;
+  padding: 0 0 0.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
   font-size: 1.2rem;
   border-radius: 6px;
