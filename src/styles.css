@@ -37,9 +37,8 @@
   --color-danger: #ff5f5f;
   --bg-image: url('/qhs-background.jpg');
 
-  --color-chart-grid: rgba(255, 255, 255, 0.14);
-  --color-chart-axis: rgba(255, 255, 255, 0.35);
-  --color-chart-tick: rgba(255, 255, 255, 0.6);
+  /* Left at the default (dark) values on purpose: these sit on the chart's red/yellow/green
+     gradient, which doesn't change with the theme, so white would be unreadable there. */
 }
 
 body {
