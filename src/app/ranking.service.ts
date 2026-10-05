@@ -232,7 +232,7 @@ export class RankingService {
     const boardId = this.boardId;
     if (!boardId) return;
     const [
-      { data: boardRow },
+      { data: boardRow, error: boardError },
       { data: criteriaRows },
       { data: fieldRows },
       { data: objectRows },
@@ -248,8 +248,14 @@ export class RankingService {
     ]);
     if (this.boardId !== boardId) return; // a newer connect() superseded this fetch
 
-    this.theme.set((boardRow?.['theme'] as ThemeName | undefined) ?? 'default');
-    this.objectName.set((boardRow?.['object_name'] as string | undefined) ?? 'Object');
+    // On error (e.g. a column added by a migration that hasn't been run yet), keep whatever
+    // theme/object name are already showing instead of blowing them away with the fallback.
+    if (boardError) {
+      logIfError(boardError);
+    } else {
+      this.theme.set((boardRow?.['theme'] as ThemeName | undefined) ?? 'default');
+      this.objectName.set((boardRow?.['object_name'] as string | undefined) ?? 'Object');
+    }
 
     this.criteria.set(
       (criteriaRows ?? []).map((r) => ({
