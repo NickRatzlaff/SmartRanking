@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AppHeader } from '../app-header/app-header';
 import { CriteriaPanel } from '../criteria-panel/criteria-panel';
 import { CriterionGraph } from '../criterion-graph/criterion-graph';
+import { FieldsSettings } from '../fields-settings/fields-settings';
 import { RankingList } from '../ranking-list/ranking-list';
 import { RankingService } from '../ranking.service';
 import { ThemeSelector } from '../theme-selector/theme-selector';
@@ -10,7 +11,15 @@ import { XyGraph } from '../xy-graph/xy-graph';
 
 @Component({
   selector: 'app-board-page',
-  imports: [AppHeader, RankingList, CriteriaPanel, CriterionGraph, XyGraph, ThemeSelector],
+  imports: [
+    AppHeader,
+    RankingList,
+    CriteriaPanel,
+    CriterionGraph,
+    XyGraph,
+    ThemeSelector,
+    FieldsSettings,
+  ],
   templateUrl: './board-page.html',
   styleUrl: './board-page.css',
 })
@@ -19,6 +28,7 @@ export class BoardPage implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly linkCopied = signal(false);
+  protected readonly showFieldsSettings = signal(false);
 
   ngOnInit(): void {
     const boardId = this.route.snapshot.paramMap.get('boardId');

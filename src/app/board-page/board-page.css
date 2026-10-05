@@ -8,6 +8,20 @@
   background: var(--color-bg);
 }
 
+.settings-btn {
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.settings-btn:hover {
+  background: var(--color-bg);
+}
+
 .loading {
   padding: 3rem 1.5rem;
   text-align: center;

@@ -1,0 +1,103 @@
+.fields-settings-dialog {
+  border: none;
+  border-radius: 10px;
+  padding: 0;
+  width: min(400px, 90vw);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.fields-settings-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.fields-settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+
+.fields-settings-content h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.object-name-input {
+  width: 100%;
+}
+
+.fields-settings-content h2:not(:first-child) {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.fields-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.field-name-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.primary-badge {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+  flex-shrink: 0;
+}
+
+.remove-btn {
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.remove-btn:hover:not(:disabled) {
+  color: var(--color-danger);
+}
+
+.remove-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.add-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.add-form input {
+  flex: 1;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+}

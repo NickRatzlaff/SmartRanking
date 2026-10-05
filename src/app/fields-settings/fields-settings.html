@@ -1,0 +1,53 @@
+<dialog #dialogRef class="fields-settings-dialog" (close)="onDialogClose()" (click)="onBackdropClick($event)">
+  <div class="fields-settings-content">
+    <h2>Object Name</h2>
+    <input
+      type="text"
+      class="object-name-input"
+      [value]="ranking.objectName()"
+      (change)="onObjectNameChange($event)"
+    />
+
+    <h2>Object Fields</h2>
+    <p class="hint">The first field is shown in the list; the rest appear when a row is expanded.</p>
+
+    <ul class="fields-list">
+      @for (field of ranking.fields(); track field.id; let i = $index) {
+        <li class="field-row">
+          <input
+            type="text"
+            class="field-name-input"
+            [value]="field.name"
+            (change)="onRename(field.id, $event)"
+          />
+          @if (i === 0) {
+            <span class="primary-badge" title="Shown in the main list">primary</span>
+          }
+          <button
+            type="button"
+            class="remove-btn"
+            title="Remove field"
+            [disabled]="ranking.fields().length <= 1"
+            (click)="ranking.removeField(field.id)"
+          >
+            ✕
+          </button>
+        </li>
+      }
+    </ul>
+
+    <form class="add-form" (submit)="$event.preventDefault(); addField()">
+      <input
+        type="text"
+        placeholder="New field name"
+        [(ngModel)]="newFieldName"
+        name="newFieldName"
+      />
+      <button type="submit">Add</button>
+    </form>
+
+    <div class="dialog-actions">
+      <button type="button" class="done-btn" (click)="close()">Done</button>
+    </div>
+  </div>
+</dialog>

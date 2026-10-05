@@ -1,18 +1,19 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { MAX_VALUE, MIN_VALUE } from '../models';
+import { MAX_VALUE, MIN_VALUE, RankedObject } from '../models';
+import { ObjectEditor } from '../object-editor/object-editor';
 import { RankingService } from '../ranking.service';
 
 @Component({
   selector: 'app-ranking-list',
-  imports: [FormsModule],
+  imports: [ObjectEditor],
   templateUrl: './ranking-list.html',
   styleUrl: './ranking-list.css',
 })
 export class RankingList {
   protected readonly ranking = inject(RankingService);
 
-  protected newObjectName = '';
+  protected readonly showAddObject = signal(false);
+  protected readonly editingObject = signal<RankedObject | null>(null);
 
   private readonly expandedIds = signal<ReadonlySet<string>>(new Set());
 
@@ -28,9 +29,9 @@ export class RankingList {
     });
   }
 
-  protected addObject(): void {
-    this.ranking.addObject(this.newObjectName);
-    this.newObjectName = '';
+  /** All fields except the primary (first) one — shown only when a row is expanded. */
+  protected secondaryFields() {
+    return this.ranking.fields().slice(1);
   }
 
   protected onValueChange(objectId: string, criterionId: string, event: Event): void {
@@ -40,19 +41,6 @@ export class RankingList {
   }
 
   protected onValueCommitted(): void {
-    this.ranking.endAdjust();
-  }
-
-  protected onNotesChange(objectId: string, event: Event): void {
-    // Freezes incoming realtime refetches until onNotesBlur, the same guard used for
-    // slider drags — otherwise a debounced write's own realtime echo can race ahead of
-    // further keystrokes and overwrite what's being typed with a slightly stale value.
-    this.ranking.beginAdjust();
-    const textarea = event.target as HTMLTextAreaElement;
-    this.ranking.setNotes(objectId, textarea.value);
-  }
-
-  protected onNotesBlur(): void {
     this.ranking.endAdjust();
   }
 

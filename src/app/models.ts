@@ -5,9 +5,14 @@ export interface Criterion {
   higherIsBetter: boolean; // false for criteria like "difficulty" where lower values should score higher
 }
 
-export interface RankedObject {
+export interface DescriptorField {
   id: string;
   name: string;
+}
+
+export interface RankedObject {
+  id: string;
+  fieldValues: Record<string, string>; // fieldId -> text value; fields()[0] is the primary label
   values: Record<string, number>; // criterionId -> value (1-10)
   notes: string;
 }

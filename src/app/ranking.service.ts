@@ -1,6 +1,14 @@
 import { Injectable, computed, effect, signal } from '@angular/core';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { Criterion, DEFAULT_VALUE, MAX_VALUE, MIN_VALUE, RankedObject, ThemeName } from './models';
+import {
+  Criterion,
+  DEFAULT_VALUE,
+  DescriptorField,
+  MAX_VALUE,
+  MIN_VALUE,
+  RankedObject,
+  ThemeName,
+} from './models';
 import { supabase } from './supabase.client';
 
 export interface ScoredObject extends RankedObject {
@@ -23,6 +31,7 @@ function logIfError(error: { message: string } | null): void {
 @Injectable({ providedIn: 'root' })
 export class RankingService {
   readonly criteria = signal<Criterion[]>([]);
+  readonly fields = signal<DescriptorField[]>([]);
   readonly objects = signal<RankedObject[]>([]);
 
   /** Criteria currently checked for graph view (0, 1, or 2) — local to this viewer, not synced. */
@@ -34,9 +43,12 @@ export class RankingService {
   /** The connected board's theme — synced via Supabase so a shared link opens pre-themed. */
   readonly theme = signal<ThemeName>('default');
 
+  /** What the ranked objects are called (e.g. "Car", "Restaurant") — used in UI labels. */
+  readonly objectName = signal<string>('Object');
+
   readonly totalWeight = computed(() => this.criteria().reduce((sum, c) => sum + c.weight, 0));
 
-  /** True while a value or weight slider is actively being dragged. */
+  /** True while a value or weight slider (or a text field) is actively being edited. */
   readonly isAdjusting = signal(false);
 
   private readonly frozenOrderIds = signal<string[]>([]);
@@ -86,7 +98,14 @@ export class RankingService {
     });
   }
 
-  /** Call when a slider drag starts, to freeze row order until endAdjust(). */
+  /** The first field's value for an object — its label in the ranked list and graphs. */
+  primaryLabel(obj: RankedObject): string {
+    const first = this.fields()[0];
+    const value = first ? obj.fieldValues[first.id] : '';
+    return value?.trim() || '(untitled)';
+  }
+
+  /** Call when a slider drag or text edit starts, to freeze row order until endAdjust(). */
   beginAdjust(): void {
     if (this.isAdjusting()) return;
     this.frozenOrderIds.set(this.scoredObjects().map((o) => o.id));
@@ -111,10 +130,13 @@ export class RankingService {
     this.boardId = boardId;
     this.loading.set(true);
     this.criteria.set([]);
+    this.fields.set([]);
     this.objects.set([]);
     this.theme.set('default');
+    this.objectName.set('Object');
 
     await this.refetchAll();
+    await this.ensureDefaultField();
     this.loading.set(false);
 
     this.channel = supabase
@@ -127,6 +149,11 @@ export class RankingService {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'criteria', filter: `board_id=eq.${boardId}` },
+        () => this.scheduleRefetch(),
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'fields', filter: `board_id=eq.${boardId}` },
         () => this.scheduleRefetch(),
       )
       .on(
@@ -149,6 +176,16 @@ export class RankingService {
         },
         () => this.scheduleRefetch(),
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'object_field_values',
+          filter: `board_id=eq.${boardId}`,
+        },
+        () => this.scheduleRefetch(),
+      )
       .subscribe();
   }
 
@@ -165,6 +202,12 @@ export class RankingService {
       this.refetchTimer = null;
     }
     this.boardId = null;
+  }
+
+  /** Every board needs at least one field; a brand-new board won't have any yet. */
+  private async ensureDefaultField(): Promise<void> {
+    if (this.fields().length > 0 || !this.boardId) return;
+    this.addField('Name');
   }
 
   private scheduleRefetch(delayMs = REFETCH_DEBOUNCE_MS): void {
@@ -188,16 +231,25 @@ export class RankingService {
   private async refetchAll(): Promise<void> {
     const boardId = this.boardId;
     if (!boardId) return;
-    const [{ data: boardRow }, { data: criteriaRows }, { data: objectRows }, { data: valueRows }] =
-      await Promise.all([
-        supabase.from('boards').select('theme').eq('id', boardId).maybeSingle(),
-        supabase.from('criteria').select('*').eq('board_id', boardId).order('created_at'),
-        supabase.from('ranked_objects').select('*').eq('board_id', boardId).order('created_at'),
-        supabase.from('object_values').select('*').eq('board_id', boardId),
-      ]);
+    const [
+      { data: boardRow },
+      { data: criteriaRows },
+      { data: fieldRows },
+      { data: objectRows },
+      { data: valueRows },
+      { data: fieldValueRows },
+    ] = await Promise.all([
+      supabase.from('boards').select('theme, object_name').eq('id', boardId).maybeSingle(),
+      supabase.from('criteria').select('*').eq('board_id', boardId).order('created_at'),
+      supabase.from('fields').select('*').eq('board_id', boardId).order('created_at'),
+      supabase.from('ranked_objects').select('*').eq('board_id', boardId).order('created_at'),
+      supabase.from('object_values').select('*').eq('board_id', boardId),
+      supabase.from('object_field_values').select('*').eq('board_id', boardId),
+    ]);
     if (this.boardId !== boardId) return; // a newer connect() superseded this fetch
 
     this.theme.set((boardRow?.['theme'] as ThemeName | undefined) ?? 'default');
+    this.objectName.set((boardRow?.['object_name'] as string | undefined) ?? 'Object');
 
     this.criteria.set(
       (criteriaRows ?? []).map((r) => ({
@@ -208,16 +260,24 @@ export class RankingService {
       })),
     );
 
+    this.fields.set((fieldRows ?? []).map((r) => ({ id: r['id'], name: r['name'] })));
+
     const valuesByObject = new Map<string, Record<string, number>>();
     for (const v of valueRows ?? []) {
       const values = valuesByObject.get(v['object_id']) ?? {};
       values[v['criterion_id']] = Number(v['value']);
       valuesByObject.set(v['object_id'], values);
     }
+    const fieldValuesByObject = new Map<string, Record<string, string>>();
+    for (const v of fieldValueRows ?? []) {
+      const values = fieldValuesByObject.get(v['object_id']) ?? {};
+      values[v['field_id']] = v['value'];
+      fieldValuesByObject.set(v['object_id'], values);
+    }
     this.objects.set(
       (objectRows ?? []).map((r) => ({
         id: r['id'],
-        name: r['name'],
+        fieldValues: fieldValuesByObject.get(r['id']) ?? {},
         values: valuesByObject.get(r['id']) ?? {},
         notes: r['notes'] ?? '',
       })),
@@ -321,21 +381,72 @@ export class RankingService {
     });
   }
 
-  addObject(name: string): void {
+  addField(name: string): void {
     const trimmed = name.trim();
     if (!trimmed || !this.boardId) return;
     const id = createId();
     const boardId = this.boardId;
-    const values: Record<string, number> = {};
-    for (const c of this.criteria()) {
-      values[c.id] = DEFAULT_VALUE;
-    }
-    this.objects.update((list) => [...list, { id, name: trimmed, values, notes: '' }]);
+    this.fields.update((list) => [...list, { id, name: trimmed }]);
+    supabase
+      .from('fields')
+      .insert({ id, board_id: boardId, name: trimmed })
+      .then(({ error }) => logIfError(error));
+  }
+
+  renameField(id: string, name: string): void {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    this.fields.update((list) => list.map((f) => (f.id === id ? { ...f, name: trimmed } : f)));
+    if (!this.boardId) return;
+    supabase
+      .from('fields')
+      .update({ name: trimmed })
+      .eq('id', id)
+      .then(({ error }) => logIfError(error));
+  }
+
+  /** Refuses to remove the last remaining field — every board must keep at least one. */
+  removeField(id: string): void {
+    if (this.fields().length <= 1) return;
+    this.fields.update((list) => list.filter((f) => f.id !== id));
+    this.objects.update((list) =>
+      list.map((obj) => {
+        const { [id]: _removed, ...rest } = obj.fieldValues;
+        return { ...obj, fieldValues: rest };
+      }),
+    );
+    if (!this.boardId) return;
+    supabase
+      .from('fields')
+      .delete()
+      .eq('id', id)
+      .then(({ error }) => logIfError(error));
+  }
+
+  addObject(fieldValues: Record<string, string>, values: Record<string, number>, notes: string): void {
+    if (!this.boardId) return;
+    const id = createId();
+    const boardId = this.boardId;
+
+    this.objects.update((list) => [...list, { id, fieldValues: { ...fieldValues }, values: { ...values }, notes }]);
 
     supabase
       .from('ranked_objects')
-      .insert({ id, board_id: boardId, name: trimmed, notes: '' })
+      .insert({ id, board_id: boardId, notes })
       .then(({ error }) => logIfError(error));
+
+    const fieldValueRows = Object.entries(fieldValues).map(([fieldId, value]) => ({
+      object_id: id,
+      field_id: fieldId,
+      board_id: boardId,
+      value,
+    }));
+    if (fieldValueRows.length > 0) {
+      supabase
+        .from('object_field_values')
+        .insert(fieldValueRows)
+        .then(({ error }) => logIfError(error));
+    }
 
     const valueRows = Object.entries(values).map(([criterionId, value]) => ({
       object_id: id,
@@ -351,6 +462,51 @@ export class RankingService {
     }
   }
 
+  updateObject(
+    id: string,
+    fieldValues: Record<string, string>,
+    values: Record<string, number>,
+    notes: string,
+  ): void {
+    this.objects.update((list) =>
+      list.map((o) => (o.id === id ? { ...o, fieldValues: { ...fieldValues }, values: { ...values }, notes } : o)),
+    );
+    if (!this.boardId) return;
+    const boardId = this.boardId;
+
+    supabase
+      .from('ranked_objects')
+      .update({ notes })
+      .eq('id', id)
+      .then(({ error }) => logIfError(error));
+
+    const fieldValueRows = Object.entries(fieldValues).map(([fieldId, value]) => ({
+      object_id: id,
+      field_id: fieldId,
+      board_id: boardId,
+      value,
+    }));
+    if (fieldValueRows.length > 0) {
+      supabase
+        .from('object_field_values')
+        .upsert(fieldValueRows, { onConflict: 'object_id,field_id' })
+        .then(({ error }) => logIfError(error));
+    }
+
+    const valueRows = Object.entries(values).map(([criterionId, value]) => ({
+      object_id: id,
+      criterion_id: criterionId,
+      board_id: boardId,
+      value,
+    }));
+    if (valueRows.length > 0) {
+      supabase
+        .from('object_values')
+        .upsert(valueRows, { onConflict: 'object_id,criterion_id' })
+        .then(({ error }) => logIfError(error));
+    }
+  }
+
   removeObject(id: string): void {
     this.objects.update((list) => list.filter((o) => o.id !== id));
     if (!this.boardId) return;
@@ -361,16 +517,23 @@ export class RankingService {
       .then(({ error }) => logIfError(error));
   }
 
-  renameObject(id: string, name: string): void {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    this.objects.update((list) => list.map((o) => (o.id === id ? { ...o, name: trimmed } : o)));
+  setFieldValue(objectId: string, fieldId: string, value: string): void {
+    this.objects.update((list) =>
+      list.map((o) =>
+        o.id === objectId ? { ...o, fieldValues: { ...o.fieldValues, [fieldId]: value } } : o,
+      ),
+    );
     if (!this.boardId) return;
-    supabase
-      .from('ranked_objects')
-      .update({ name: trimmed })
-      .eq('id', id)
-      .then(({ error }) => logIfError(error));
+    const boardId = this.boardId;
+    this.debounceWrite(`field:${objectId}:${fieldId}`, () => {
+      supabase
+        .from('object_field_values')
+        .upsert(
+          { object_id: objectId, field_id: fieldId, board_id: boardId, value },
+          { onConflict: 'object_id,field_id' },
+        )
+        .then(({ error }) => logIfError(error));
+    });
   }
 
   setValue(objectId: string, criterionId: string, value: number): void {
@@ -403,10 +566,19 @@ export class RankingService {
       .then(({ error }) => logIfError(error));
   }
 
+  setObjectName(name: string): void {
+    const trimmed = name.trim() || 'Object';
+    this.objectName.set(trimmed);
+    if (!this.boardId) return;
+    supabase
+      .from('boards')
+      .update({ object_name: trimmed })
+      .eq('id', this.boardId)
+      .then(({ error }) => logIfError(error));
+  }
+
   setNotes(objectId: string, notes: string): void {
-    this.objects.update((list) =>
-      list.map((o) => (o.id === objectId ? { ...o, notes } : o)),
-    );
+    this.objects.update((list) => list.map((o) => (o.id === objectId ? { ...o, notes } : o)));
     if (!this.boardId) return;
     this.debounceWrite(`notes:${objectId}`, () => {
       supabase

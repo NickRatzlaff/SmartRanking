@@ -119,7 +119,7 @@ export class XyGraph {
         group = { key, x: this.valueToX(xValue), y: this.valueToY(yValue), members: [] };
         byKey.set(key, group);
       }
-      group.members.push({ id: obj.id, name: obj.name, xValue, yValue });
+      group.members.push({ id: obj.id, name: this.ranking.primaryLabel(obj), xValue, yValue });
     }
     return [...byKey.values()];
   });

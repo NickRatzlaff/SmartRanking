@@ -6,9 +6,25 @@
   border-radius: 8px;
 }
 
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
 .ranking-list h2 {
-  margin: 0 0 0.75rem;
+  margin: 0;
   font-size: 1.05rem;
+}
+
+.add-btn {
+  width: 1.8rem;
+  height: 1.8rem;
+  padding: 0;
+  line-height: 1;
+  font-size: 1.2rem;
+  border-radius: 6px;
 }
 
 .object-list {
@@ -80,6 +96,21 @@
     background 0.15s ease;
 }
 
+.edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0 0.5rem;
+}
+
+.edit-btn:hover {
+  color: var(--color-accent);
+}
+
 .remove-btn {
   border: none;
   background: none;
@@ -105,7 +136,8 @@
   gap: 0.6rem;
 }
 
-.detail-row label {
+.detail-row label,
+.detail-label {
   width: 6rem;
   flex-shrink: 0;
   font-size: 0.85rem;
@@ -114,6 +146,11 @@
 
 .detail-row input[type='range'] {
   flex: 1;
+}
+
+.detail-text {
+  flex: 1;
+  font-size: 0.9rem;
 }
 
 .detail-value {
@@ -132,29 +169,16 @@
   color: var(--color-text-secondary);
 }
 
-.notes-field textarea {
+.notes-text {
+  margin: 0;
   padding: 0.5rem;
-  font: inherit;
-  resize: vertical;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  white-space: pre-wrap;
 }
 
 .empty-state {
   text-align: center;
   color: var(--color-text-muted);
   padding: 1.5rem;
-}
-
-.add-form {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.add-form input {
-  flex: 1;
-  padding: 0.35rem 0.5rem;
-}
-
-.add-form button {
-  padding: 0.35rem 0.75rem;
 }

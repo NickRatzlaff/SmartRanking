@@ -1,0 +1,48 @@
+<dialog #dialogRef class="object-editor-dialog" (close)="onDialogClose()" (click)="onBackdropClick($event)">
+  <form class="object-editor-form" (submit)="$event.preventDefault(); save()">
+    <h2>{{ editObject() ? 'Edit ' + ranking.objectName() : 'Add ' + ranking.objectName() }}</h2>
+
+    <div class="section fields-section">
+      @for (field of ranking.fields(); track field.id; let i = $index) {
+        <label class="form-field">
+          <span>{{ field.name }}</span>
+          <input
+            type="text"
+            [value]="fieldValues()[field.id] ?? ''"
+            [required]="i === 0"
+            (input)="setFieldValue(field.id, $event)"
+          />
+        </label>
+      }
+    </div>
+
+    <div class="section criteria-section">
+      @for (criterion of ranking.criteria(); track criterion.id) {
+        <div class="criterion-row">
+          <label [attr.for]="'new-criterion-' + criterion.id">{{ criterion.name }}</label>
+          <input
+            [id]="'new-criterion-' + criterion.id"
+            type="range"
+            min="1"
+            max="10"
+            [value]="values()[criterion.id] ?? 5"
+            (input)="setValue(criterion.id, $event)"
+          />
+          <span class="value-readout">{{ values()[criterion.id] ?? 5 }}</span>
+        </div>
+      } @empty {
+        <p class="empty-state">No criteria defined yet — add some in the Criteria panel.</p>
+      }
+    </div>
+
+    <label class="section notes-field">
+      <span>Notes</span>
+      <textarea rows="4" [value]="notes()" (input)="setNotes($event)"></textarea>
+    </label>
+
+    <div class="dialog-actions">
+      <button type="button" class="cancel-btn" (click)="cancel()">Cancel</button>
+      <button type="submit" class="save-btn">{{ editObject() ? 'Save' : 'Add' }}</button>
+    </div>
+  </form>
+</dialog>

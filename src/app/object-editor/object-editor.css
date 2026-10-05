@@ -1,0 +1,104 @@
+.object-editor-dialog {
+  border: none;
+  border-radius: 10px;
+  padding: 0;
+  width: min(480px, 90vw);
+  max-height: 85vh;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.object-editor-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.object-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.object-editor-form h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.object-editor-form > h2 + .section {
+  padding-top: 0;
+  border-top: none;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.criterion-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.criterion-row label {
+  width: 7rem;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.criterion-row input[type='range'] {
+  flex: 1;
+}
+
+.value-readout {
+  min-width: 1.5ch;
+  text-align: right;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.notes-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.notes-field textarea {
+  resize: vertical;
+}
+
+.empty-state {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.save-btn {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+}

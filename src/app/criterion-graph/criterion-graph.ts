@@ -73,7 +73,7 @@ export class CriterionGraph {
       const value = obj.values[criterion.id] ?? 5;
       return {
         id: obj.id,
-        name: obj.name,
+        name: this.ranking.primaryLabel(obj),
         value,
         x: MARGIN_LEFT + ((i + 1) * plotWidth) / laneCount,
         y: this.valueToY(value),
