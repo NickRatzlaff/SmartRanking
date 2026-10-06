@@ -3,7 +3,7 @@
     @let xc = a.xc;
     @let yc = a.yc;
     <h2>{{ xc.name }} vs {{ yc.name }}</h2>
-      <p class="hint">Drag the points to adjust each object's values for both criteria.</p>
+      <p class="hint">Drag the points to adjust each {{ ranking.objectName().toLowerCase() }}'s values for both criteria.</p>
 
       <svg
         [attr.viewBox]="'0 0 ' + viewboxSize + ' ' + viewboxSize"

@@ -1,7 +1,7 @@
 <section class="ranking-list">
   <div class="header-row">
     <h2>{{ ranking.objectName() }} Ranking</h2>
-    <button type="button" class="add-btn" title="Add object" (click)="showAddObject.set(true)">+</button>
+    <button type="button" class="add-btn" [title]="'Add ' + ranking.objectName().toLowerCase()" (click)="showAddObject.set(true)">+</button>
   </div>
 
   <ul class="object-list">
@@ -29,7 +29,7 @@
             <button
               type="button"
               class="edit-btn"
-              title="Edit object"
+              [title]="'Edit ' + ranking.objectName().toLowerCase()"
               (click)="editingObject.set(obj)"
             >
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
@@ -44,7 +44,7 @@
           <button
             type="button"
             class="remove-btn"
-            title="Remove object"
+            [title]="'Remove ' + ranking.objectName().toLowerCase()"
             (click)="ranking.removeObject(obj.id)"
           >
             ✕
@@ -84,7 +84,7 @@
         }
       </li>
     } @empty {
-      <li class="empty-state">No objects yet — click + to add one.</li>
+      <li class="empty-state">Click + to add your first {{ ranking.objectName().toLowerCase() }}.</li>
     }
   </ul>
 </section>

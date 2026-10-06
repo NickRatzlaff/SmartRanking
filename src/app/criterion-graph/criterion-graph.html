@@ -1,7 +1,7 @@
 <section class="criterion-graph">
   @if (criterion(); as c) {
     <h2>{{ c.name }}</h2>
-    <p class="hint">Drag the points up or down to adjust each object's value.</p>
+    <p class="hint">Drag the points up or down to adjust each {{ ranking.objectName().toLowerCase() }}'s value.</p>
 
     <div class="graph-scroll">
       <svg
